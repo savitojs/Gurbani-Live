@@ -1,0 +1,206 @@
+#!/bin/bash
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+CHECK_SYMBOL='\u2713'
+X_SYMBOL='\u2A2F'
+
+function display_help() {
+    echo -e "${YELLOW}Usage:${NC} ./fetch-n-play [options]"
+    echo -e "${BLUE}Options:${NC}"
+    echo -e "  ${GREEN}-h, --help${NC}      Show this help message and exit"
+    echo -e "  ${GREEN}-s, --stop${NC}      Stop the current VLC playback"
+    echo -e "  ${GREEN}-t, --status${NC}    Show online status of available channels"
+    echo -e "${YELLOW}Description:${NC}"
+    echo -e "  This script fetches live Gurbani channels from Sikhnet.com and allows you to play them using VLC."
+    echo -e "  You can run the script to select and play a channel, show their online status, or use the --stop option to stop playback."
+    exit 0
+}
+
+function stop_playback() {
+    echo -e "${RED}Stopping the stream in the background...${NC}"
+    pkill vlc || pkill VLC > /dev/null 2>&1
+    echo -e "${GREEN}Playback stopped.${NC}"
+    exit 0
+}
+
+function check_dependencies() {
+    local missing=()
+
+    for cmd in vlc fzf jq; do
+        if ! command -v $cmd &>/dev/null; then
+            missing+=($cmd)
+        fi
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo -e "${RED}Missing dependencies: ${missing[@]}${NC}"
+        echo -e "${YELLOW}Attempting to install missing dependencies...${NC}"
+
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            if command -v brew &>/dev/null; then
+                for cmd in "${missing[@]}"; do
+                    brew install $cmd
+                done
+            else
+                echo "Homebrew is not installed. Please install it from https://brew.sh/"
+                exit 1
+            fi
+        elif [[ -f /etc/fedora-release ]]; then
+            sudo dnf install -y "${missing[@]}"
+        elif [[ -f /etc/lsb-release ]]; then
+            sudo apt-get install -y "${missing[@]}"
+        else
+            echo "Unsupported OS. Please install the following dependencies manually: ${missing[@]}"
+            exit 1
+        fi
+    else
+        echo -e "${GREEN}All dependencies are installed.${NC}"
+    fi
+}
+
+#
+# https://gitlab.com/-/snippets/1936196
+#
+function execute_and_wait() {
+  eval $1 >/tmp/execute-and-wait.log 2>&1 &
+  pid=$!
+  delay=0.05
+
+  frames=('\u280B' '\u2819' '\u2839' '\u2838' '\u283C' '\u2834' '\u2826' '\u2827' '\u2807' '\u280F')
+
+  echo "$pid" >"/tmp/.spinner.pid"
+
+  # Hide cursor
+  tput civis
+  index=0
+  framesCount=${#frames[@]}
+  while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+    printf "${YELLOW}${frames[$index]}${NC} ${GREEN}$2${NC}"
+
+    let index=index+1
+    if [ "$index" -ge "$framesCount" ]; then
+      index=0
+    fi
+
+    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+    sleep $delay
+  done
+
+  wait $!
+  exitCode=$?
+
+  if [ "$exitCode" -eq "0" ]; then
+    printf "${CHECK_SYMBOL} ${2}                                                                \b\n"
+  else
+    printf "${X_SYMBOL} ${2}                                                                \b\n"
+  fi
+  
+  # show cursor
+  tput cnorm
+
+  return $exitCode
+}
+
+function show_status() {
+    execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+    result=$?
+
+    if [ $result -ne 0 ]; then
+      echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+      exit 1
+    else
+      echo ""
+      echo -e "${BLUE}Title\tChannel\tOnline/Offline\tLocation\tURL${NC}" | column -t -s $'\t'
+    fi
+
+    jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' /tmp/radio_data.json | while IFS=$'\t' read -r title channel isOnline location url; do
+        if [ "$isOnline" = "true" ]; then
+            online_status="${GREEN}Online${NC}"
+        else
+            online_status="${RED}Offline${NC}"
+        fi
+        echo -e "$title\t$channel\t$online_status\t$location\t$url"
+    done | column -t -s $'\t'
+
+    rm /tmp/radio_data.json
+    exit 0
+}
+
+check_dependencies
+
+# command-line arguments
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
+  -h | --help )
+    display_help
+    ;;
+  -s | --stop )
+    stop_playback
+    ;;
+  -t | --status )
+    show_status
+    ;;
+esac; shift; done
+
+execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+result=$?
+
+if [ $result -ne 0 ]; then
+  echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+  exit 1
+else
+	echo ""
+	echo -e "${BLUE}Shows only Gurudwaras with their ${GREEN}Online${BLUE} status on Sikhnet${NC}"
+fi
+
+echo -e "${YELLOW}Use arrow keys to select a channel and press Enter to play. Press Esc to cancel.${NC}"
+
+options=()
+urls=()
+
+VLC_BIN=$(which vlc)
+
+while IFS=$'\t' read -r title channel isOnline location url; do
+    if [ "$isOnline" = "true" ]; then
+        options+=("$title - $location")
+        urls+=("$url")
+    fi
+done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' /tmp/radio_data.json)
+
+selected_index=$(printf "%s\n" "${options[@]}" | fzf --no-sort --height=10 --border=rounded --prompt="Select a channel: " --layout=reverse)
+
+if [ -z "$selected_index" ]; then
+  echo "No selection made, exiting."
+  exit 0
+fi
+
+index=$(printf "%s\n" "${options[@]}" | grep -nx "$selected_index" | cut -d: -f1)
+url="${urls[$((index-1))]}"
+
+rm /tmp/radio_data.json
+
+PS3="Select an option: "
+options=("🛑  Stop" "💤  Play in background")
+
+echo -e "${GREEN}Playing ${selected_index}...${NC}"
+$VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
+echo -e "${GREEN}Stream playing in VLC...${NC}"
+
+select choice in "${options[@]}"; do
+    case "$choice" in
+        "🛑  Stop")
+            stop_playback
+            ;;
+        "💤  Play in background")
+            echo -e "${BLUE}Quitting the script.${NC}"
+            exit
+            ;;
+        *)
+            echo -e "${ORANGE}Invalid option: $REPLY${NC}"
+            ;;
+    esac
+done
