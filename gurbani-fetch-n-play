@@ -6,6 +6,8 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+SCRIPT_URL="https://raw.githubusercontent.com/savitojs/gurbani-fetch-n-play/main/gurbani-fetch-n-play"
+
 CHECK_SYMBOL='\u2713'
 X_SYMBOL='\u2A2F'
 
@@ -15,9 +17,31 @@ function display_help() {
     echo -e "  ${GREEN}-h, --help${NC}      Show this help message and exit"
     echo -e "  ${GREEN}-s, --stop${NC}      Stop the current VLC playback"
     echo -e "  ${GREEN}-t, --status${NC}    Show online status of available channels"
+    echo -e "  ${GREEN}-u, --update${NC}    Update the script to the latest version"
     echo -e "${YELLOW}Description:${NC}"
     echo -e "  This script fetches live Gurbani channels from Sikhnet.com and allows you to play them using VLC."
     echo -e "  You can run the script to select and play a channel, show their online status, or use the --stop option to stop playback."
+    exit 0
+}
+
+function update_script() {
+    echo -e "${YELLOW}IMPORTANT:${NC} This will replace the current script file!"
+    echo -e "If you continue, your current version of the script will be overwritten."
+    echo -en "Press ${GREEN}Enter${NC} to continue or ${RED}Ctrl+C${NC} to cancel"
+    
+    read -p ": "
+
+    echo -e "${YELLOW}Checking for updates...${NC}"
+    
+    # Download the latest version of the script
+    curl -o "$0" -s "$SCRIPT_URL"
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Script updated successfully.${NC}"
+        chmod +x "$0"
+    else
+        echo -e "${RED}Failed to update the script. Please check your connection or URL.${NC}"
+    fi
     exit 0
 }
 
@@ -144,6 +168,9 @@ while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
   -t | --status )
     show_status
     ;;
+  -u | --update )
+    update_script
+		;;
 esac; shift; done
 
 execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
