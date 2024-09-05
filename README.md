@@ -63,7 +63,7 @@ chmod +x gurbani-fetch-n-play
 ### Installation - Optional
 
 ```
-sudo cp ./gurbani-fetch-n-play /usr/bin/
+sudo install ./gurbani-fetch-n-play /usr/bin/
 ```
 
 The script will automatically check for and install any missing dependencies.

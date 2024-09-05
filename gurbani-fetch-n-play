@@ -25,7 +25,7 @@ function stop_playback() {
     echo -e "${RED}Stopping the stream in the background...${NC}"
     pkill vlc || pkill VLC > /dev/null 2>&1
     echo -e "${GREEN}Playback stopped.${NC}"
-    exit 0
+		echo ""
 }
 
 function check_dependencies() {
@@ -60,6 +60,7 @@ function check_dependencies() {
         fi
     else
         echo -e "${GREEN}All dependencies are installed.${NC}"
+				echo ""
     fi
 }
 
@@ -133,13 +134,12 @@ function show_status() {
 
 check_dependencies
 
-# command-line arguments
 while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
   -h | --help )
     display_help
     ;;
   -s | --stop )
-    stop_playback
+    stop_playback && exit 0
     ;;
   -t | --status )
     show_status
@@ -184,23 +184,79 @@ url="${urls[$((index-1))]}"
 rm /tmp/radio_data.json
 
 PS3="Select an option: "
-options=("🛑  Stop" "💤  Play in background")
+options=("🛑  Stop" "💤  Play in background" "🔄  Switch radio channel")
+
+if pgrep -x "vlc" > /dev/null; then
+    echo -e "${RED}Running playback detected. Stopping...${NC}"
+    stop_playback
+else
+    echo -e "${GREEN}No playback detected, continuing...${NC}"
+		echo ""
+fi
 
 echo -e "${GREEN}Playing ${selected_index}...${NC}"
+
 $VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
 echo -e "${GREEN}Stream playing in VLC...${NC}"
+echo ""
 
-select choice in "${options[@]}"; do
-    case "$choice" in
-        "🛑  Stop")
-            stop_playback
-            ;;
-        "💤  Play in background")
-            echo -e "${BLUE}Quitting the script.${NC}"
-            exit
-            ;;
-        *)
-            echo -e "${ORANGE}Invalid option: $REPLY${NC}"
-            ;;
-    esac
+while true; do
+  select choice in "${options[@]}"; do
+      case "$choice" in
+          "🛑  Stop")
+              stop_playback && exit 0
+              ;;
+          "💤  Play in background")
+              echo -e "${BLUE}Quitting the script.${NC} \n${GREEN}You can stop the background playback running: $0 -s"
+              exit
+              ;;
+          "🔄  Switch radio channel")
+              echo -e "${BLUE}Switching to another radio channel...${NC}"
+              pkill vlc || pkill VLC > /dev/null 2>&1
+
+              # Re-run the station selection
+              execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+              result=$?
+
+              if [ $result -ne 0 ]; then
+                echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+                exit 1
+              else
+                  echo ""
+                  echo -e "${BLUE}Shows only Gurudwaras with their ${GREEN}Online${BLUE} status on Sikhnet${NC}"
+              fi
+
+              echo -e "${YELLOW}Use arrow keys to select another radio channel and press Enter to play. Press Esc to cancel.${NC}"
+
+              options=()
+              urls=()
+
+              while IFS=$'\t' read -r title channel isOnline location url; do
+                  if [ "$isOnline" = "true" ]; then
+                      options+=("$title - $location")
+                      urls+=("$url")
+                  fi
+              done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' /tmp/radio_data.json)
+
+              selected_index=$(printf "%s\n" "${options[@]}" | fzf --no-sort --height=10 --border=rounded --prompt="Select a channel: " --layout=reverse)
+
+              if [ -z "$selected_index" ]; then
+                echo "No selection made, exiting."
+                exit 0
+              fi
+
+              index=$(printf "%s\n" "${options[@]}" | grep -nx "$selected_index" | cut -d: -f1)
+              url="${urls[$((index-1))]}"
+
+              rm /tmp/radio_data.json
+
+              echo -e "${GREEN}Playing ${selected_index}...${NC}"
+              $VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
+              echo -e "${GREEN}Stream playing in VLC...${NC}"
+              ;;
+          *)
+              echo -e "${ORANGE}Invalid option: $REPLY${NC}"
+              ;;
+      esac
+  done
 done
