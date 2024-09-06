@@ -2,13 +2,13 @@
 
 # Script Name: gurbani-fetch-n-play
 # Description:
-#   Fetches and plays live Gurbani channels from Sikhnet.com
-#   This script is humbly devoted to the Almighty, with gratitude and reverence
+#   This script fetches live Gurbani channels from Sikhnet.com and allows you to play them using VLC
+#   It's humbly devoted to the Almighty, with gratitude and reverence.
 # Author: Savitoj Singh
 # Date: 2024-09-06
 # License: MIT License
 
-VERSION="v0.4"
+VERSION="v0.5"
 
 # Colors Palette for reference
 BLACK='\033[0;30m'
@@ -56,8 +56,10 @@ function display_help() {
     echo -e "  ${GREEN}-u, --update${NC}    Update the script to the latest version"
     echo -e "  ${GREEN}-v, --version${NC}   Show the script version and exit"
     echo -e "${YELLOW}Description:${NC}"
-    echo -e "  This script fetches live Gurbani channels from Sikhnet.com and allows you to play them using VLC."
-    echo -e "  You can run the script to select and play a channel, show their online status, or use the --stop option to stop playback."
+    echo -e "${CYAN}  This script fetches live Gurbani channels from Sikhnet.com and allows you to play them using VLC"
+    echo -e "  It's humbly devoted to the Almighty, with gratitude and reverence${NC}"
+    echo -e ""
+    echo -e "  You can run the script to ${GREEN}select and play a channel, show their online status${NC}, or ${RED}use the --stop option to stop playback${NC}"
     exit 0
 }
 
@@ -71,39 +73,46 @@ function install_script() {
     local script_name="gurbani-fetch-n-play"
     local available_dirs=()
 
-    IFS=':' read -r -a path_dirs <<< "$PATH"
-    echo -e "${YELLOW}Checking for writable directories in your PATH...${NC}"
+    if [[ ! -t 0 ]]; then
+        echo -e "${YELLOW}Running in non-interactive mode, defaulting to ~/.local/bin${NC}"
+        target_dir="$HOME/.local/bin"
+        mkdir -p "$target_dir"
+    else
+        IFS=':' read -r -a path_dirs <<< "$PATH"
+        echo -e "${YELLOW}Checking for writable directories in your PATH...${NC}"
 
-    for dir in "${path_dirs[@]}"; do
-        if [ -d "$dir" ] && [ -w "$dir" ]; then
-            available_dirs+=("$dir")
+        for dir in "${path_dirs[@]}"; do
+            if [ -d "$dir" ] && [ -w "$dir" ]; then
+                available_dirs+=("$dir")
+            fi
+        done
+
+        if [ ${#available_dirs[@]} -eq 0 ]; then
+            echo -e "${RED}No writable directories found in your PATH.${NC}"
+            exit 1
         fi
-    done
 
-    if [ ${#available_dirs[@]} -eq 0 ]; then
-        echo -e "${RED}No writable directories found in your PATH.${NC}"
-        echo -e "${YELLOW}Please add a writable directory to your PATH or manually install the script.${NC}"
-        exit 1
+        echo -e "${GREEN}The following directories in your PATH are writable:${NC}"
+        select target_dir in "${available_dirs[@]}"; do
+            if [ -n "$target_dir" ]; then
+                break
+            else
+                echo -e "${RED}Invalid selection.${NC}"
+            fi
+        done
     fi
 
-    echo -e "${GREEN}The following directories in your PATH are writable:${NC}"
-    select target_dir in "${available_dirs[@]}"; do
-        if [ -n "$target_dir" ]; then
-            echo -e "${YELLOW}Installing the script to $target_dir...${NC}"
-            install -m 0755 "./$script_name" "$target_dir"
+    echo -e "${YELLOW}Installing the script to $target_dir...${NC}"
+    curl -s https://raw.githubusercontent.com/savitojs/gurbani-fetch-n-play/main/gurbani-fetch-n-play -o "$target_dir/$script_name"
+    chmod +x "$target_dir/$script_name"
 
-            if [ $? -eq 0 ]; then
-                echo -e "${GREEN}Script installed successfully to $target_dir.${NC}"
-                exit 0
-            else
-                echo -e "${RED}Failed to install the script. Please try again.${NC}"
-                exit 1
-            fi
-            break
-        else
-            echo -e "${RED}Invalid selection. Please choose a valid directory.${NC}"
-        fi
-    done
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Script installed successfully to $target_dir.${NC}"
+        exit 0
+    else
+        echo -e "${RED}Failed to install the script. Please try again.${NC}"
+        exit 1
+    fi
 }
 
 function update_script() {

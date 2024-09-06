@@ -15,6 +15,7 @@ This project combines the gists I have written together with `fzf`
 - Play selected channels using VLC
 - Check the online status of available channels
 - Stop VLC playback directly from the command line
+- Switch channels between online via CLI
 
 ## Prerequisites
 
@@ -42,53 +43,65 @@ The script will automatically check for these dependencies and attempt to instal
 ### Options
 
 - `-h, --help`  
-  Show the help message and exit.
+  Show the help message and exit
 
 - `-s, --stop`  
-  Stop the current VLC playback.
+  Stop the current VLC playback
 
 - `-t, --status`  
-  Show the online status of available channels without playing them.
+  Show the online status of available channels without playing them
 
-## Installation
+- `-i, --install`
+  Installs the script to writeable `$PATH` available
 
-Simply clone the repository and run the script:
+- `-u, --update`
+  Update the insalled script if version mismatch
+
+- `-v, --version`
+  Shows the version of the installed script
+
+## Installation (non-interactive)
+
+Non-interactive mode installs at `~/.local/bin` by default.
 
 ```bash
-git clone https://github.com/savitojs/gurbani-fetch-n-play.git
-cd gurbani-fetch-n-play
-chmod +x gurbani-fetch-n-play
-```
-
-### Installation - Optional
-
-```
-sudo install ./gurbani-fetch-n-play /usr/bin/
+curl -s https://raw.githubusercontent.com/savitojs/gurbani-fetch-n-play/main/gurbani-fetch-n-play | bash -s -- --install
 ```
 
 The script will automatically check for and install any missing dependencies.
 
-## Examples
+
+## Installation (Interactive)
+
+Interactive installation will discover writeable `$PATH` for installation
+
+```bash
+curl -O https://raw.githubusercontent.com/savitojs/gurbani-fetch-n-play/main/gurbani-fetch-n-play
+chmod +x gurbani-fetch-n-play
+./gurbani-fetch-n-play --install
+```
+
+## Examples (once installed)
 
 - **Fetch and Play**  
   To fetch and play a channel:
 
   ```bash
-  ./gurbani-fetch-n-play
+  gurbani-fetch-n-play
   ```
 
 - **Stop Playback**  
   To stop the current playback:
 
   ```bash
-  ./gurbani-fetch-n-play --stop
+  gurbani-fetch-n-play --stop
   ```
 
 - **Show Status**  
   To show the online status of channels:
 
   ```bash
-  ./gurbani-fetch-n-play --status
+  gurbani-fetch-n-play --status
   ```
 
 ## License
