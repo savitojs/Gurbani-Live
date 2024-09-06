@@ -31,10 +31,14 @@ function update_script() {
     
     read -p ": "
 
+    if [ ! -w "$0" ]; then
+        echo -e "${RED}Error: Cannot write to the $(dirname $0). Try running with sudo.${NC}"
+        exit 1
+    fi
+
     echo -e "${YELLOW}Checking for updates...${NC}"
     
-    # Download the latest version of the script
-    sudo curl -o "$0" -s "$SCRIPT_URL"
+    curl -o "$0" -s "$SCRIPT_URL"
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Script updated successfully.${NC}"
