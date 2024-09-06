@@ -1,5 +1,7 @@
 #!/bin/bash
 
+VERSION="v0.2"
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
@@ -18,9 +20,16 @@ function display_help() {
     echo -e "  ${GREEN}-s, --stop${NC}      Stop the current VLC playback"
     echo -e "  ${GREEN}-t, --status${NC}    Show online status of available channels"
     echo -e "  ${GREEN}-u, --update${NC}    Update the script to the latest version"
+    echo -e "  ${GREEN}-v, --version${NC}    Show the script version and exit"
     echo -e "${YELLOW}Description:${NC}"
     echo -e "  This script fetches live Gurbani channels from Sikhnet.com and allows you to play them using VLC."
     echo -e "  You can run the script to select and play a channel, show their online status, or use the --stop option to stop playback."
+    exit 0
+}
+
+function show_version() {
+    echo ""
+    echo -e "${GREEN}gurbani-fetch-n-play script version: $VERSION${NC}"
     exit 0
 }
 
@@ -31,23 +40,31 @@ function update_script() {
     
     read -p ": "
 
+    echo -e "${YELLOW}Checking for updates...${NC}"
+
+    UPSTREAM_VERSION=$(curl -s https://raw.githubusercontent.com/savitojs/gurbani-fetch-n-play/main/gurbani-fetch-n-play | grep '^VERSION=' | cut -d '"' -f 2)
+
+    if [ "$UPSTREAM_VERSION" == "$VERSION" ]; then
+        echo -e "${GREEN}You are already using the latest version ($VERSION). No update required.${NC}"
+        exit 0
+    fi
+
     if [ ! -w "$0" ]; then
-        echo -e "${RED}Error: Cannot write to the $(dirname $0). Try running with sudo.${NC}"
+        echo -e "${RED}Error: Cannot write to the $(dirname $0). Try running with sudo${NC}"
         exit 1
     fi
 
-    echo -e "${YELLOW}Checking for updates...${NC}"
-    
     curl -o "$0" -s "$SCRIPT_URL"
     
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Script updated successfully.${NC}"
+        echo -e "${GREEN}Script updated successfully to version $UPSTREAM_VERSION${NC}"
         chmod +x "$0"
     else
-        echo -e "${RED}Failed to update the script. Try using sudo $0 --update${NC}"
+        echo -e "${RED}Failed to update the script${NC}"
     fi
     exit 0
 }
+
 
 function stop_playback() {
     echo -e "${RED}Stopping the stream in the background...${NC}"
@@ -86,9 +103,6 @@ function check_dependencies() {
             echo "Unsupported OS. Please install the following dependencies manually: ${missing[@]}"
             exit 1
         fi
-    else
-        echo -e "${GREEN}All dependencies are installed.${NC}"
-				echo ""
     fi
 }
 
@@ -162,20 +176,31 @@ function show_status() {
 
 check_dependencies
 
-while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
-  -h | --help )
-    display_help
-    ;;
-  -s | --stop )
-    stop_playback && exit 0
-    ;;
-  -t | --status )
-    show_status
-    ;;
-  -u | --update )
-    update_script
-		;;
-esac; shift; done
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do 
+  case $1 in
+    -h | --help )
+      display_help
+      ;;
+    -s | --stop )
+      stop_playback && exit 0
+      ;;
+    -t | --status )
+      show_status
+      ;;
+    -u | --update )
+      update_script
+      ;;
+    -v | --version )
+      show_version
+      ;;
+    * )
+      echo -e "${RED}Invalid option: $1${NC}"
+      echo -e "Use ${GREEN}--help${NC} for a list of valid options."
+      exit 1
+      ;;
+  esac
+  shift
+done
 
 execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
 result=$?
@@ -238,7 +263,7 @@ while true; do
               stop_playback && exit 0
               ;;
           "💤  Play in background")
-              echo -e "${BLUE}Quitting the script.${NC} \n${GREEN}You can stop the background playback running: $0 -s"
+              echo -e "${BLUE}Quitting the script.${NC} \n${GREEN}You can stop the background playback running: $0 --stop"
               exit
               ;;
           "🔄  Switch radio channel")
