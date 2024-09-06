@@ -254,6 +254,8 @@ while true; do
               fi
 
               echo -e "${YELLOW}Use arrow keys to select another radio channel and press Enter to play. Press Esc to cancel.${NC}"
+							echo -e "Select an option: "
+							echo -e "1. 🛑  Stop\n2. 💤  Play in background\n3. 🔄  Switch radio channel\n"
 
               options=()
               urls=()
