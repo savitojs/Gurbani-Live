@@ -34,13 +34,13 @@ function update_script() {
     echo -e "${YELLOW}Checking for updates...${NC}"
     
     # Download the latest version of the script
-    curl -o "$0" -s "$SCRIPT_URL"
+    sudo curl -o "$0" -s "$SCRIPT_URL"
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Script updated successfully.${NC}"
         chmod +x "$0"
     else
-        echo -e "${RED}Failed to update the script. Please check your connection or URL.${NC}"
+        echo -e "${RED}Failed to update the script. Try using sudo $0 --update${NC}"
     fi
     exit 0
 }
