@@ -8,38 +8,70 @@
 # Date: 2024-09-06
 # License: MIT License
 
-VERSION="v0.5"
+VERSION="v0.6"
 
-# Colors Palette for reference
-BLACK='\033[0;30m'
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[0;37m'
+OS="$(uname)"
+if [[ "$OS" == "Darwin" ]]; then
+    BLACK='\033[0;30m'
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    BLUE='\033[0;34m'
+    PURPLE='\033[0;35m'
+    CYAN='\033[0;36m'
+    WHITE='\033[0;37m'
 
-BRIGHT_BLACK='\033[0;90m'
-BRIGHT_RED='\033[0;91m'
-BRIGHT_GREEN='\033[0;92m'
-BRIGHT_YELLOW='\033[0;93m'
-BRIGHT_BLUE='\033[0;94m'
-BRIGHT_PURPLE='\033[0;95m'
-BRIGHT_CYAN='\033[0;96m'
-BRIGHT_WHITE='\033[0;97m'
+    BRIGHT_BLACK='\033[0;90m'
+    BRIGHT_RED='\033[0;91m'
+    BRIGHT_GREEN='\033[0;92m'
+    BRIGHT_YELLOW='\033[0;93m'
+    BRIGHT_BLUE='\033[0;94m'
+    BRIGHT_PURPLE='\033[0;95m'
+    BRIGHT_CYAN='\033[0;96m'
+    BRIGHT_WHITE='\033[0;97m'
 
-BG_BLACK='\033[40m'
-BG_RED='\033[41m'
-BG_GREEN='\033[42m'
-BG_YELLOW='\033[43m'
-BG_BLUE='\033[44m'
-BG_PURPLE='\033[45m'
-BG_CYAN='\033[46m'
-BG_WHITE='\033[47m'
+    BG_BLACK='\033[40m'
+    BG_RED='\033[41m'
+    BG_GREEN='\033[42m'
+    BG_YELLOW='\033[43m'
+    BG_BLUE='\033[44m'
+    BG_PURPLE='\033[45m'
+    BG_CYAN='\033[46m'
+    BG_WHITE='\033[47m'
 
-# Reset/No Color
-NC='\033[0m'
+    # Reset color
+    NC='\033[0m'
+else
+    BLACK='\033[0;30m'
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    BLUE='\033[0;34m'
+    PURPLE='\033[0;35m'
+    CYAN='\033[0;36m'
+    WHITE='\033[0;37m'
+
+    BRIGHT_BLACK='\033[0;90m'
+    BRIGHT_RED='\033[0;91m'
+    BRIGHT_GREEN='\033[0;92m'
+    BRIGHT_YELLOW='\033[0;93m'
+    BRIGHT_BLUE='\033[0;94m'
+    BRIGHT_PURPLE='\033[0;95m'
+    BRIGHT_CYAN='\033[0;96m'
+    BRIGHT_WHITE='\033[0;97m'
+
+    BG_BLACK='\033[40m'
+    BG_RED='\033[41m'
+    BG_GREEN='\033[42m'
+    BG_YELLOW='\033[43m'
+    BG_BLUE='\033[44m'
+    BG_PURPLE='\033[45m'
+    BG_CYAN='\033[46m'
+    BG_WHITE='\033[47m'
+
+    # Reset color
+    NC='\033[0m'
+fi
 
 SCRIPT_URL="https://raw.githubusercontent.com/savitojs/gurbani-fetch-n-play/main/gurbani-fetch-n-play"
 
@@ -330,11 +362,11 @@ rm /tmp/radio_data.json
 PS3="Select an option: "
 options=("🛑  Stop" "💤  Play in background" "🔄  Switch radio channel")
 
-if pgrep -x "vlc" > /dev/null; then
+if ps aux | grep -v grep | grep -qi "VLC" > /dev/null; then
     echo -e "${RED}Running playback detected. Stopping...${NC}"
     stop_playback
 else
-    echo -e "${GREEN}No playback detected, continuing...${NC}"
+    echo -e "${GREEN}No running playback detected, continuing...${NC}"
 		echo ""
 fi
 
