@@ -8,7 +8,7 @@
 # Date: 2024-09-06
 # License: MIT License
 
-VERSION="v0.6"
+VERSION="v0.7"
 
 OS="$(uname)"
 if [[ "$OS" == "Darwin" ]]; then
@@ -388,7 +388,6 @@ while true; do
               ;;
           "🔄  Switch radio channel")
               echo -e "${BLUE}Switching to another radio channel...${NC}"
-              pkill vlc || pkill VLC > /dev/null 2>&1
 
               # Re-run the station selection
               execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
@@ -428,6 +427,7 @@ while true; do
 
               rm /tmp/radio_data.json
 
+              pkill vlc || pkill VLC > /dev/null 2>&1
               echo -e "${GREEN}Playing ${selected_index}...${NC}"
               $VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
               echo -e "${GREEN}Stream playing in VLC...${NC}"
