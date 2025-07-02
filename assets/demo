@@ -1,0 +1,124 @@
+#!/bin/bash
+
+# Gurbani Live Demo Simulation Script
+# This script simulates user interaction for demo recording
+
+# Configuration
+TYPING_SPEED=0.05
+PAUSE_SHORT=1
+PAUSE_MEDIUM=2
+PAUSE_LONG=3
+
+# Colors for demo
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Function to simulate typing
+type_command() {
+    local cmd="$1"
+    local speed="${2:-$TYPING_SPEED}"
+    
+    for (( i=0; i<${#cmd}; i++ )); do
+        printf "${cmd:$i:1}"
+        sleep "$speed"
+    done
+    echo
+}
+
+# Function to show a section header
+show_section() {
+    echo
+    echo -e "${CYAN}=== $1 ===${NC}"
+    sleep "$PAUSE_SHORT"
+}
+
+# Clear screen and start demo
+clear
+echo -e "${YELLOW}🎵 Gurbani Live - Feature Demo${NC}"
+echo -e "${BLUE}Live Gurbani Radio Streaming with Advanced Features${NC}"
+sleep "$PAUSE_LONG"
+
+# Section 1: Show help
+show_section "Available Options"
+type_command "gurbani-live --help"
+gurbani-live --help
+sleep "$PAUSE_MEDIUM"
+
+# Section 2: Show status
+show_section "Channel Status Check"
+type_command "gurbani-live --status"
+echo -e "${BLUE}Checking online status of all channels...${NC}"
+sleep "$PAUSE_SHORT"
+echo -e "${GREEN}✅ Sri Harmandir Sahib - Amritsar - Online${NC}"
+echo -e "${GREEN}✅ Gurdwara Bangla Sahib - New Delhi - Online${NC}"
+echo -e "${GREEN}✅ Takht Sri Patna Sahib - Patna - Online${NC}"
+echo -e "${YELLOW}⚠️  Some other channel - Offline${NC}"
+sleep "$PAUSE_MEDIUM"
+
+# Section 3: Show favorites system
+show_section "Favorites System"
+echo -e "${BLUE}Showing favorites marked with ⭐${NC}"
+sleep "$PAUSE_SHORT"
+echo -e "Channel List:"
+echo -e "  ⭐ Sri Harmandir Sahib - Amritsar"
+echo -e "     Gurdwara Bangla Sahib - New Delhi" 
+echo -e "  ⭐ Takht Sri Patna Sahib - Patna"
+echo -e "     Gurdwara Sis Ganj Sahib - New Delhi"
+sleep "$PAUSE_MEDIUM"
+
+# Section 4: Simulate playing
+show_section "Playing Channel"
+echo -e "${CYAN}Selected: ${GREEN}Sri Harmandir Sahib - Amritsar${NC}"
+sleep "$PAUSE_SHORT"
+echo -e "${BLUE}🎵 Starting VLC stream...${NC}"
+sleep "$PAUSE_SHORT"
+echo -e "${GREEN}✅ Stream started${NC}"
+echo
+echo -e "${CYAN}Interactive Options:${NC}"
+echo -e "  ${GREEN}1${NC}. 🛑  Stop (${YELLOW}s${NC})"
+echo -e "  ${GREEN}2${NC}. 💤  Background (${YELLOW}b${NC})"
+echo -e "  ${GREEN}3${NC}. 🔄  Switch (${YELLOW}c${NC})"
+echo -e "  ${GREEN}4${NC}. ⭐  Favorite (${YELLOW}f${NC})"
+echo -e "  ${GREEN}5${NC}. 📻  Refresh (${YELLOW}r${NC})"
+sleep "$PAUSE_MEDIUM"
+
+# Section 5: Show favorite action
+show_section "Managing Favorites"
+echo -e "${BLUE}Pressing 'f' to toggle favorite...${NC}"
+sleep "$PAUSE_SHORT"
+echo -e "${GREEN}✅ Added to favorites: Sri Harmandir Sahib - Amritsar${NC}"
+sleep "$PAUSE_SHORT"
+
+# Section 6: Quick play feature
+show_section "Quick Play Feature"
+type_command "gurbani-live --quick"
+echo -e "${CYAN}Quick playing last channel: ${GREEN}Sri Harmandir Sahib - Amritsar${NC}"
+sleep "$PAUSE_SHORT"
+echo -e "${GREEN}🎵 Playing Sri Harmandir Sahib - Amritsar...${NC}"
+sleep "$PAUSE_MEDIUM"
+
+# Section 7: Show created files
+show_section "Data Files Created"
+echo -e "${BLUE}Files created for persistence:${NC}"
+echo -e "  📁 ${CYAN}~/.gurbani_favorites${NC} - Your favorite channels"
+echo -e "  📁 ${CYAN}~/.gurbani_last_played${NC} - Last played channel for quick access"
+sleep "$PAUSE_MEDIUM"
+
+# Section 8: Installation
+show_section "Easy Installation"
+echo -e "${BLUE}One-line installation:${NC}"
+type_command "curl -s https://raw.githubusercontent.com/savitojs/gurbani-live/main/gurbani-live | bash -s -- --install" 0.02
+sleep "$PAUSE_MEDIUM"
+
+# Final message
+echo
+echo -e "${GREEN}🙏 Gurbani Live - Bringing divine music to your terminal${NC}"
+echo -e "${CYAN}✨ Features: Favorites • Quick Play • Interactive Controls • Channel Status${NC}"
+echo -e "${YELLOW}🔗 GitHub: https://github.com/savitojs/gurbani-live${NC}"
+sleep "$PAUSE_LONG"
+
+echo
+echo -e "${BLUE}Demo completed! 🎉${NC}"

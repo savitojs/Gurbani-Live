@@ -1,0 +1,492 @@
+# The configurations that used for the recording, feel free to edit them
+config:
+  # Specify a command to be executed
+  # like `/bin/bash -l`, `ls`, or any other commands
+  # the default is bash for Linux
+  # or powershell.exe for Windows
+  command: bash -l
+
+  # Specify the current working directory path
+  # the default is the current working directory path
+  cwd: /home/sav/personal/gurbani-live
+
+  # Export additional ENV variables
+  env:
+    recording: true
+
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 139
+
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 22
+
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 0
+
+  # Quality
+  # 1 - 100
+  quality: 100
+
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: 2000
+
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: floating
+    title: Gurbani Live Demo
+    style:
+      border: 0px black solid
+      # boxShadow: none
+      # margin: 0px
+
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: null
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 100px
+      opacity: 0.9
+
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Monaco, Lucida Console, Ubuntu Mono, Monospace"
+
+  # The size of the font
+  fontSize: 12
+
+  # The height of lines
+  lineHeight: 1
+
+  # The spacing between letters
+  letterSpacing: 0
+
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#afafaf"
+    cursor: "#c7c7c7"
+    black: "#232628"
+    red: "#fc4384"
+    green: "#b3e33b"
+    yellow: "#ffa727"
+    blue: "#75dff2"
+    magenta: "#ae89fe"
+    cyan: "#708387"
+    white: "#d5d5d0"
+    brightBlack: "#626566"
+    brightRed: "#ff7fac"
+    brightGreen: "#c8ed71"
+    brightYellow: "#ebdf86"
+    brightBlue: "#75dff2"
+    brightMagenta: "#ae89fe"
+    brightCyan: "#b1c6ca"
+    brightWhite: "#f9f9f4"
+
+# Records, feel free to edit them
+records:
+  - delay: 9
+    content: "\e[H\e[2J\e[3J\e[1;33m\U0001F3B5 Gurbani Live - Feature Demo\e[0m\r\n\e[0;34mLive Gurbani Radio Streaming with Advanced Features\e[0m\r\n"
+  - delay: 3003
+    content: "\r\n\e[0;36m=== Available Options ===\e[0m\r\n"
+  - delay: 1003
+    content: g
+  - delay: 53
+    content: u
+  - delay: 53
+    content: r
+  - delay: 53
+    content: b
+  - delay: 54
+    content: a
+  - delay: 53
+    content: "n"
+  - delay: 53
+    content: i
+  - delay: 52
+    content: "-"
+  - delay: 53
+    content: l
+  - delay: 53
+    content: i
+  - delay: 53
+    content: v
+  - delay: 51
+    content: e
+  - delay: 52
+    content: " "
+  - delay: 52
+    content: "-"
+  - delay: 53
+    content: "-"
+  - delay: 51
+    content: h
+  - delay: 51
+    content: e
+  - delay: 51
+    content: l
+  - delay: 51
+    content: p
+  - delay: 52
+    content: "\r\n"
+  - delay: 5
+    content: "\e[0;36m\r\n\r\n   _____            _                 _   _      _\r\n  / ____|          | |               (_) | |    (_)\r\n | |  __ _   _ _ __| |__   __ _ _ __  _  | |     ___   _____\r\n | | |_ | | | | '__| '_ \\ / _` | '_ \\| | | |    | \\ \\ / / _ \\\r\n | |__| | |_| | |  | |_) | (_| | | | | | | |____| |\\ V /  __/\r\n  \\_____|\\__,_|_|  |_.__/ \\__,_|_| |_|_| |______|_| \\_/ \\___|\r\n\r\n\e[0m\r\n\e[0;33mUsage:\e[0m gurbani-live [options]\r\n\e[0;34mOptions:\e[0m\r\n  \e[0;32m-h, --help\e[0m      Show this help message and exit\r\n  \e[0;32m-s, --stop\e[0m      Stop the current VLC playback\r\n  \e[0;32m-t, --status\e[0m    Show online status of available channels\r\n  \e[0;32m-i, --install\e[0m   Install the script to writeable PATH\r\n  \e[0;32m-u, --update\e[0m    Update the script to the latest version\r\n  \e[0;32m-v, --version\e[0m   Show the script version and exit\r\n  \e[0;32m-q, --quick\e[0m     Quick play the last played channel\r\n\e[0;33mCommands:\e[0m\r\n  \e[0;32mcompletion [bash|zsh]\e[0m Generate shell completion function\r\n\e[0;33mDescription:\e[0m\r\n\e[0;36m  This script fetches live Gurbani channels from Sikhnet.com and allows you to play them using VLC\r\n  It's humbly devoted to the Almighty, with gratitude and reverence\e[0m\r\n\r\n  You can run the script to \e[0;32mselect and play a channel, show their online status\e[0m, or \e[0;31muse the --stop option to stop playback\e[0m\r\n  \e[0;36mUse --quick to instantly play your last listened channel\e[0m\r\n\r\n\e[0;33mShell Completion:\e[0m\r\n  \e[0;36mTo enable completion:\e[0m\r\n  \e[0;32m# For bash:\e[0m \e[0;34msource <(gurbani-live completion bash)\e[0m\r\n  \e[0;32m# For zsh:\e[0m \e[0;34msource <(gurbani-live completion zsh)\e[0m\r\n\r\n\e[0;33mTo make it permanent, add to your shell config:\e[0m\r\n  \e[0;32m# For bash:\e[0m \e[0;34mecho 'source <(gurbani-live completion bash)' >> ~/.bashrc\e[0m\r\n  \e[0;32m# For zsh:\e[0m \e[0;34mecho 'source <(gurbani-live completion zsh)' >> ~/.zshrc\e[0m\r\n"
+  - delay: 2002
+    content: "\r\n\e[0;36m=== Channel Status Check ===\e[0m\r\n"
+  - delay: 1003
+    content: g
+  - delay: 53
+    content: u
+  - delay: 52
+    content: r
+  - delay: 52
+    content: b
+  - delay: 54
+    content: a
+  - delay: 53
+    content: "n"
+  - delay: 53
+    content: i
+  - delay: 53
+    content: "-"
+  - delay: 52
+    content: l
+  - delay: 53
+    content: i
+  - delay: 53
+    content: v
+  - delay: 52
+    content: e
+  - delay: 52
+    content: " "
+  - delay: 53
+    content: "-"
+  - delay: 52
+    content: "-"
+  - delay: 52
+    content: s
+  - delay: 52
+    content: t
+  - delay: 52
+    content: a
+  - delay: 54
+    content: t
+  - delay: 52
+    content: u
+  - delay: 52
+    content: s
+  - delay: 54
+    content: "\r\n\e[0;34mChecking online status of all channels...\e[0m\r\n"
+  - delay: 1002
+    content: "\e[0;32m✅ Sri Harmandir Sahib - Amritsar - Online\e[0m\r\n\e[0;32m✅ Gurdwara Bangla Sahib - New Delhi - Online\e[0m\r\n\e[0;32m✅ Takht Sri Patna Sahib - Patna - Online\e[0m\r\n\e[1;33m⚠️  Some other channel - Offline\e[0m\r\n"
+  - delay: 2003
+    content: "\r\n\e[0;36m=== Favorites System ===\e[0m\r\n"
+  - delay: 1003
+    content: "\e[0;34mShowing favorites marked with ⭐\e[0m\r\n"
+  - delay: 1001
+    content: "Channel List:\r\n  ⭐ Sri Harmandir Sahib - Amritsar\r\n     Gurdwara Bangla Sahib - New Delhi\r\n  ⭐ Takht Sri Patna Sahib - Patna\r\n     Gurdwara Sis Ganj Sahib - New Delhi\r\n"
+  - delay: 2003
+    content: "\r\n\e[0;36m=== Playing Channel ===\e[0m\r\n"
+  - delay: 1003
+    content: "\e[0;36mSelected: \e[0;32mSri Harmandir Sahib - Amritsar\e[0m\r\n"
+  - delay: 1001
+    content: "\e[0;34m\U0001F3B5 Starting VLC stream...\e[0m\r\n"
+  - delay: 1003
+    content: "\e[0;32m✅ Stream started\e[0m\r\n\r\n\e[0;36mInteractive Options:\e[0m\r\n  \e[0;32m1\e[0m. \U0001F6D1  Stop (\e[1;33ms\e[0m)\r\n  \e[0;32m2\e[0m. \U0001F4A4  Background (\e[1;33mb\e[0m)\r\n  \e[0;32m3\e[0m. \U0001F504  Switch (\e[1;33mc\e[0m)\r\n  \e[0;32m4\e[0m. ⭐  Favorite (\e[1;33mf\e[0m)\r\n  \e[0;32m5\e[0m. \U0001F4FB  Refresh (\e[1;33mr\e[0m)\r\n"
+  - delay: 2003
+    content: "\r\n\e[0;36m=== Managing Favorites ===\e[0m\r\n"
+  - delay: 1003
+    content: "\e[0;34mPressing 'f' to toggle favorite...\e[0m\r\n"
+  - delay: 1003
+    content: "\e[0;32m✅ Added to favorites: Sri Harmandir Sahib - Amritsar\e[0m\r\n"
+  - delay: 1002
+    content: "\r\n\e[0;36m=== Quick Play Feature ===\e[0m\r\n"
+  - delay: 1003
+    content: g
+  - delay: 53
+    content: u
+  - delay: 53
+    content: r
+  - delay: 52
+    content: b
+  - delay: 52
+    content: a
+  - delay: 52
+    content: "n"
+  - delay: 51
+    content: i
+  - delay: 54
+    content: "-"
+  - delay: 51
+    content: l
+  - delay: 52
+    content: i
+  - delay: 53
+    content: v
+  - delay: 51
+    content: e
+  - delay: 53
+    content: " "
+  - delay: 53
+    content: "-"
+  - delay: 52
+    content: "-"
+  - delay: 53
+    content: q
+  - delay: 53
+    content: u
+  - delay: 54
+    content: i
+  - delay: 53
+    content: c
+  - delay: 53
+    content: k
+  - delay: 54
+    content: "\r\n\e[0;36mQuick playing last channel: \e[0;32mSri Harmandir Sahib - Amritsar\e[0m\r\n"
+  - delay: 1003
+    content: "\e[0;32m\U0001F3B5 Playing Sri Harmandir Sahib - Amritsar...\e[0m\r\n"
+  - delay: 2003
+    content: "\r\n\e[0;36m=== Data Files Created ===\e[0m\r\n"
+  - delay: 1001
+    content: "\e[0;34mFiles created for persistence:\e[0m\r\n  \U0001F4C1 \e[0;36m~/.gurbani_favorites\e[0m - Your favorite channels\r\n  \U0001F4C1 \e[0;36m~/.gurbani_last_played\e[0m - Last played channel for quick access\r\n"
+  - delay: 2001
+    content: "\r\n\e[0;36m=== Easy Installation ===\e[0m\r\n"
+  - delay: 1001
+    content: "\e[0;34mOne-line installation:\e[0m\r\nc"
+  - delay: 22
+    content: u
+  - delay: 21
+    content: r
+  - delay: 23
+    content: l
+  - delay: 22
+    content: " "
+  - delay: 22
+    content: "-"
+  - delay: 21
+    content: s
+  - delay: 21
+    content: " "
+  - delay: 21
+    content: h
+  - delay: 22
+    content: t
+  - delay: 23
+    content: t
+  - delay: 22
+    content: p
+  - delay: 22
+    content: s
+  - delay: 23
+    content: ":"
+  - delay: 21
+    content: /
+  - delay: 23
+    content: /
+  - delay: 21
+    content: r
+  - delay: 22
+    content: a
+  - delay: 21
+    content: w
+  - delay: 21
+    content: .
+  - delay: 23
+    content: g
+  - delay: 22
+    content: i
+  - delay: 21
+    content: t
+  - delay: 23
+    content: h
+  - delay: 22
+    content: u
+  - delay: 22
+    content: b
+  - delay: 22
+    content: u
+  - delay: 22
+    content: s
+  - delay: 23
+    content: e
+  - delay: 21
+    content: r
+  - delay: 22
+    content: c
+  - delay: 23
+    content: o
+  - delay: 21
+    content: "n"
+  - delay: 23
+    content: t
+  - delay: 22
+    content: e
+  - delay: 21
+    content: "n"
+  - delay: 22
+    content: t
+  - delay: 22
+    content: .
+  - delay: 22
+    content: c
+  - delay: 22
+    content: o
+  - delay: 21
+    content: m
+  - delay: 23
+    content: /
+  - delay: 24
+    content: s
+  - delay: 21
+    content: a
+  - delay: 22
+    content: v
+  - delay: 21
+    content: i
+  - delay: 21
+    content: t
+  - delay: 21
+    content: o
+  - delay: 23
+    content: j
+  - delay: 21
+    content: s
+  - delay: 22
+    content: /
+  - delay: 21
+    content: g
+  - delay: 22
+    content: u
+  - delay: 22
+    content: r
+  - delay: 23
+    content: b
+  - delay: 21
+    content: a
+  - delay: 21
+    content: "n"
+  - delay: 22
+    content: i
+  - delay: 22
+    content: "-"
+  - delay: 23
+    content: l
+  - delay: 22
+    content: i
+  - delay: 23
+    content: v
+  - delay: 21
+    content: e
+  - delay: 21
+    content: /
+  - delay: 22
+    content: m
+  - delay: 23
+    content: a
+  - delay: 21
+    content: i
+  - delay: 22
+    content: "n"
+  - delay: 22
+    content: /
+  - delay: 23
+    content: g
+  - delay: 22
+    content: u
+  - delay: 22
+    content: r
+  - delay: 22
+    content: b
+  - delay: 22
+    content: a
+  - delay: 24
+    content: "n"
+  - delay: 22
+    content: i
+  - delay: 22
+    content: "-"
+  - delay: 22
+    content: l
+  - delay: 21
+    content: i
+  - delay: 21
+    content: v
+  - delay: 21
+    content: e
+  - delay: 21
+    content: " "
+  - delay: 21
+    content: "|"
+  - delay: 23
+    content: " "
+  - delay: 21
+    content: b
+  - delay: 22
+    content: a
+  - delay: 23
+    content: s
+  - delay: 21
+    content: h
+  - delay: 21
+    content: " "
+  - delay: 22
+    content: "-"
+  - delay: 24
+    content: s
+  - delay: 22
+    content: " "
+  - delay: 22
+    content: "-"
+  - delay: 24
+    content: "-"
+  - delay: 21
+    content: " "
+  - delay: 23
+    content: "-"
+  - delay: 22
+    content: "-"
+  - delay: 23
+    content: i
+  - delay: 22
+    content: "n"
+  - delay: 21
+    content: s
+  - delay: 22
+    content: t
+  - delay: 21
+    content: a
+  - delay: 21
+    content: l
+  - delay: 22
+    content: l
+  - delay: 23
+    content: "\r\n"
+  - delay: 2001
+    content: "\r\n\e[0;32m\U0001F64F Gurbani Live - Bringing divine music to your terminal\e[0m\r\n\e[0;36m✨ Features: Favorites • Quick Play • Interactive Controls • Channel Status\e[0m\r\n\e[1;33m\U0001F517 GitHub: https://github.com/savitojs/gurbani-live\e[0m\r\n"
+  - delay: 3001
+    content: "\r\n\e[0;34mDemo completed! \U0001F389\e[0m\r\n\e]0;sav@taskforce:~/personal/gurbani-live/\a\e[?2004h\e[32;1msav@taskforce\e[0m:\e[32;1m~/personal/gurbani-live\e[0m$\e[0m "

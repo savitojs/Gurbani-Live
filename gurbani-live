@@ -1,0 +1,871 @@
+#!/bin/bash
+
+# Script Name: gurbani-live
+# Description:
+#   A comprehensive Gurbani Live streaming tool that fetches live channels from Sikhnet.com
+#   Features: VLC playback, favorites system, quick play, shell completion, auto-install/update
+#   🙏 Devoted to the Almighty (ਵਾਹਿਗੁਰੂ), in humble service and endless gratitude
+# Author: Savitoj Singh
+# Date: 2024-09-06 (Updated: 2025-07-04)
+# License: MIT License
+
+VERSION="v0.8"
+
+OS="$(uname)"
+if [[ "$OS" == "Darwin" ]]; then
+    BLACK='\033[0;30m'
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    BLUE='\033[0;34m'
+    PURPLE='\033[0;35m'
+    CYAN='\033[0;36m'
+    WHITE='\033[0;37m'
+
+    BRIGHT_BLACK='\033[0;90m'
+    BRIGHT_RED='\033[0;91m'
+    BRIGHT_GREEN='\033[0;92m'
+    BRIGHT_YELLOW='\033[0;93m'
+    BRIGHT_BLUE='\033[0;94m'
+    BRIGHT_PURPLE='\033[0;95m'
+    BRIGHT_CYAN='\033[0;96m'
+    BRIGHT_WHITE='\033[0;97m'
+
+    BG_BLACK='\033[40m'
+    BG_RED='\033[41m'
+    BG_GREEN='\033[42m'
+    BG_YELLOW='\033[43m'
+    BG_BLUE='\033[44m'
+    BG_PURPLE='\033[45m'
+    BG_CYAN='\033[46m'
+    BG_WHITE='\033[47m'
+
+    # Reset color
+    NC='\033[0m'
+else
+    BLACK='\033[0;30m'
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    BLUE='\033[0;34m'
+    PURPLE='\033[0;35m'
+    CYAN='\033[0;36m'
+    WHITE='\033[0;37m'
+
+    BRIGHT_BLACK='\033[0;90m'
+    BRIGHT_RED='\033[0;91m'
+    BRIGHT_GREEN='\033[0;92m'
+    BRIGHT_YELLOW='\033[0;93m'
+    BRIGHT_BLUE='\033[0;94m'
+    BRIGHT_PURPLE='\033[0;95m'
+    BRIGHT_CYAN='\033[0;96m'
+    BRIGHT_WHITE='\033[0;97m'
+
+    BG_BLACK='\033[40m'
+    BG_RED='\033[41m'
+    BG_GREEN='\033[42m'
+    BG_YELLOW='\033[43m'
+    BG_BLUE='\033[44m'
+    BG_PURPLE='\033[45m'
+    BG_CYAN='\033[46m'
+    BG_WHITE='\033[47m'
+
+    # Reset color
+    NC='\033[0m'
+fi
+
+SCRIPT_URL="https://github.com/savitojs/Gurbani-Live/releases/download/${VERSION}/gurbani-live"
+
+CURRENT_PLAYING_CHANNEL=""
+CURRENT_PLAYING_URL=""
+FAVORITES_FILE="$HOME/.gurbani_favorites"
+LAST_PLAYED_FILE="$HOME/.gurbani_last_played"
+
+CHECK_SYMBOL='\u2713'
+X_SYMBOL='\u2A2F'
+
+function show_version() {
+    echo ""
+    echo -e "${GREEN}Gurbani Live script version: ${YELLOW}${VERSION}${NC}"
+    echo -e "${CYAN}Repository: ${BLUE}https://github.com/savitojs/gurbani-live${NC}"
+    echo ""
+    exit 0
+}
+
+function print_ascii_art() {
+    echo -e "${CYAN}"
+    cat <<'EOF'
+
+   _____            _                 _   _      _
+  / ____|          | |               (_) | |    (_)
+ | |  __ _   _ _ __| |__   __ _ _ __  _  | |     ___   _____
+ | | |_ | | | | '__| '_ \ / _` | '_ \| | | |    | \ \ / / _ \
+ | |__| | |_| | |  | |_) | (_| | | | | | | |____| |\ V /  __/
+  \_____|\__,_|_|  |_.__/ \__,_|_| |_|_| |______|_| \_/ \___|
+
+EOF
+    echo -e "${NC}"
+}
+
+function display_help() {
+    echo -e "${YELLOW}Usage:${NC} $(basename $0) [options]"
+    echo -e "${BLUE}Options:${NC}"
+    echo -e "  ${GREEN}-h, --help${NC}      Show this help message and exit"
+    echo -e "  ${GREEN}-s, --stop${NC}      Stop the current VLC playback"
+    echo -e "  ${GREEN}-t, --status${NC}    Show online status of available channels"
+    echo -e "  ${GREEN}-i, --install${NC}   Install the script to writeable PATH"
+    echo -e "  ${GREEN}-u, --update${NC}    Update the script to the latest version"
+    echo -e "  ${GREEN}-v, --version${NC}   Show the script version and exit"
+    echo -e "  ${GREEN}-q, --quick${NC}     Quick play the last played channel"
+    echo -e "${YELLOW}Commands:${NC}"
+    echo -e "  ${GREEN}completion [bash|zsh]${NC} Generate shell completion function"
+    echo -e "${YELLOW}Description:${NC}"
+    echo -e "${CYAN}  A comprehensive Gurbani Live streaming tool that fetches live channels from Sikhnet.com"
+    echo -e "  Features: VLC playback, favorites system, quick play, shell completion, auto-install/update"
+    echo -e "  🙏 Devoted to the Almighty (ਵਾਹਿਗੁਰੂ), in humble service and endless gratitude${NC}"
+    echo ""
+    echo -e "  You can run the script to ${GREEN}select and play a channel, show their online status${NC}, or ${RED}use the --stop option to stop playback${NC}"
+    echo -e "  ${CYAN}Use --quick to instantly play your last listened channel${NC}"
+    echo ""
+    echo -e "${YELLOW}Shell Completion:${NC}"
+    echo -e "  ${CYAN}To enable completion:${NC}"
+    echo -e "  "${GREEN}# For bash:${NC}" ${BLUE}source <($(basename $0) completion bash)${NC}"
+    echo -e "  "${GREEN}# For zsh:${NC}" ${BLUE}source <($(basename $0) completion zsh)${NC}"
+    echo ""
+    echo -e "${YELLOW}To make it permanent, add to your shell config:${NC}"
+    echo -e "  "${GREEN}# For bash:${NC}" ${BLUE}echo 'source <($(basename $0) completion bash quiet)' >> ~/.bashrc${NC}"
+    echo -e "  "${GREEN}# For zsh:${NC}" ${BLUE}echo 'source <($(basename $0) completion zsh quiet)' >> ~/.zshrc${NC}"
+    exit 0
+}
+
+function quick_play() {
+    local last_played=$(load_last_played)
+    if [ -z "$last_played" ]; then
+        echo -e "${RED}No last played channel found. Please select a channel first.${NC}"
+        exit 1
+    fi
+
+    echo -e "${CYAN}Quick playing last channel: ${GREEN}$last_played${NC}"
+
+    execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+    result=$?
+
+    if [ $result -ne 0 ]; then
+        echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+        exit 1
+    fi
+
+    local url=$(jq -r --arg title "$last_played" '.[] | select(.isLive == true and .isOnline == true) | select("\(.title) - \(.location)" == $title) | .resource' /tmp/radio_data.json)
+
+    if [ -z "$url" ] || [ "$url" = "null" ]; then
+        echo -e "${RED}Last played channel '$last_played' is not available or offline.${NC}"
+        rm /tmp/radio_data.json
+        exit 1
+    fi
+
+    rm /tmp/radio_data.json
+
+    # Stop any existing playback
+    if ps aux | grep -v grep | grep -qi "VLC" > /dev/null; then
+        stop_playback
+    fi
+
+    # Start playback
+    echo -e "${GREEN}Playing $last_played...${NC}"
+    if launch_vlc "$url"; then
+        echo -e "${GREEN}Stream playing in VLC...${NC}"
+        echo -e "${BLUE}Running in background.${NC} \n${GREEN}You can stop the background playback running: $(basename $0) --stop"
+    else
+        echo -e "${RED}Failed to launch VLC${NC}"
+        exit 1
+    fi
+    exit 0
+}
+
+function generate_completion() {
+    local shell="$1"
+    local quiet="$2"
+
+    if [[ "$shell" == "zsh" ]]; then
+        cat <<'EOF'
+# Zsh completion for gurbani-live
+_gurbani_live_completions() {
+    local cur prev
+    cur="${words[CURRENT]}"
+    prev="${words[CURRENT-1]}"
+
+    opts=('-h' '--help' '-s' '--stop' '-t' '--status' '-i' '--install' '-u' '--update' '-v' '--version' '-q' '--quick')
+
+    compadd -- "${opts[@]}"
+}
+
+autoload -Uz compinit && compinit
+compdef _gurbani_live_completions gurbani-live
+EOF
+        # Only show messages when not in quiet mode and running interactively
+        if [[ "$quiet" != "quiet" ]] && [[ -t 2 ]] && [[ -z "$GURBANI_COMPLETION_QUIET" ]]; then
+            echo "" >&2
+            echo -e "${GREEN}🙏 Shell completion for $(basename $0) has been loaded with divine blessings ${NC}" >&2
+            echo -e "${GREEN}📿 Type '$(basename $0) <TAB>' to see available options ${NC}" >&2
+            echo "" >&2
+        fi
+    elif [[ "$shell" == "bash" ]]; then
+        cat <<'EOF'
+# Bash completion for gurbani-live
+_gurbani_live_completions() {
+    local cur prev
+    COMPREPLY=()
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Only show long options for cleaner completion
+    opts=('--help' '--stop' '--status' '--install' '--update' '--version' '--quick')
+
+    COMPREPLY=( $(compgen -W "${opts[*]}" -- "${cur}") )
+}
+
+complete -F _gurbani_live_completions gurbani-live
+EOF
+        # Only show messages when not in quiet mode and running interactively
+        if [[ "$quiet" != "quiet" ]] && [[ -t 2 ]] && [[ -z "$GURBANI_COMPLETION_QUIET" ]]; then
+            echo "" >&2
+            echo -e "${GREEN}🙏 Shell completion for $(basename $0) has been loaded with divine blessings ${NC}" >&2
+            echo -e "${GREEN}📿 Type '$(basename $0) <TAB>' to see available options ${NC}" >&2
+            echo "" >&2
+        fi
+    else
+        echo -e "${YELLOW}Usage:${NC} $(basename $0) completion [bash|zsh]"
+        echo ""
+        echo -e "${CYAN}Generate shell completion for gurbani-live${NC}"
+        echo ""
+        echo -e "${YELLOW}Examples:${NC}"
+        echo -e "  ${GREEN}# For bash:${NC}"
+        echo -e "  ${BLUE}source <($(basename $0) completion bash)${NC}"
+        echo -e "  ${GREEN}# For zsh:${NC}"
+        echo -e "  ${BLUE}source <($(basename $0) completion zsh)${NC}"
+        echo ""
+        echo -e "${YELLOW}To make it permanent, add to your shell config:${NC}"
+        echo -e "  ${GREEN}# For bash:${NC}"
+        echo -e "  ${BLUE}echo 'source <($(basename $0) completion bash quiet)' >> ~/.bashrc${NC}"
+        echo -e "  ${GREEN}# For zsh:${NC}"
+        echo -e "  ${BLUE}echo 'source <($(basename $0) completion zsh quiet)' >> ~/.zshrc${NC}"
+        exit 1
+    fi
+    exit 0
+}
+
+function clean_old_script() {
+    local is_interactive="${1:-true}"
+
+    # Check for and clean up old script name if it exists
+    if [ "$is_interactive" = "true" ]; then
+        old_script_path="$(which gurbani-fetch-n-play 2>/dev/null)"
+        if [ -n "$old_script_path" ] && [ -f "$old_script_path" ]; then
+            echo -e "${YELLOW}🔄 Found old script at: ${CYAN}$old_script_path${NC}"
+            read -p "🗑️  Remove old script? (y/N): " delete_old_script
+            if [[ "$delete_old_script" =~ ^[Yy]$ ]]; then
+                rm -f "$old_script_path"
+                echo -e "${GREEN}✅ Old script removed successfully${NC}"
+            else
+                echo -e "${BLUE}ℹ️  Old script kept (you can remove it manually later)${NC}"
+            fi
+            echo ""
+        fi
+    fi
+}
+
+function install_script() {
+    local script_name="gurbani-live"
+    local available_dirs=()
+    local target_dir=""
+    local non_interactive=false
+
+    # Check if running in non-interactive mode (e.g., piped from curl or in CI)
+    if [ ! -t 0 ] || [ -n "$CI" ]; then
+        non_interactive=true
+    fi
+
+    IFS=':' read -r -a path_dirs <<< "$PATH"
+    path_dirs=($(echo "${path_dirs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+    if [ "$non_interactive" = false ]; then
+        echo -e "${CYAN}🔍 Checking for writable directories in your PATH...${NC}"
+    fi
+
+    for dir in "${path_dirs[@]}"; do
+        if [ -d "$dir" ] && [ -w "$dir" ]; then
+            available_dirs+=("$dir")
+        fi
+    done
+
+    if [ ${#available_dirs[@]} -eq 0 ]; then
+        echo -e "${RED}No writable directories found in your PATH.${NC}"
+        exit 1
+    fi
+
+    if [ "$non_interactive" = true ]; then
+        # Non-interactive mode: choose default directory
+        # Prefer ~/.local/bin, then ~/bin, then first available
+        for preferred in "$HOME/.local/bin" "$HOME/bin"; do
+            for dir in "${available_dirs[@]}"; do
+                if [ "$dir" = "$preferred" ]; then
+                    target_dir="$dir"
+                    break 2
+                fi
+            done
+        done
+
+        # If no preferred directory found, use first available
+        if [ -z "$target_dir" ]; then
+            target_dir="${available_dirs[0]}"
+        fi
+
+        echo -e "${CYAN}🎵 Installing Gurbani Live to: ${GREEN}$target_dir${NC}"
+    else
+        # Interactive mode: let user choose
+        echo -e "${YELLOW}📂 The following directories in your PATH are writable:${NC}"
+        echo ""
+        select target_dir in "${available_dirs[@]}"; do
+            if [ -n "$target_dir" ]; then
+                break
+            else
+                echo -e "${RED}Invalid selection.${NC}"
+            fi
+        done
+    fi
+
+    if [ "$non_interactive" = false ]; then
+        echo -e "${YELLOW}📥 Installing the script to $target_dir...${NC}"
+    fi
+    curl -s -L "$SCRIPT_URL" -o "$target_dir/$script_name" && chmod +x "$target_dir/$script_name"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}🙏 Gurbani Live installed successfully! ${YELLOW}($target_dir)${NC}"
+        echo ""
+
+        if [ "$non_interactive" = false ]; then
+            clean_old_script "true"
+        fi
+
+        echo -e "${CYAN}🎶 You can now run: ${GREEN}$script_name${NC}"
+        echo -e "${PURPLE}🙏 May the divine Gurbani bring peace to your soul${NC}"
+        exit 0
+    else
+        echo -e "${RED}Failed to install the script. Please try again.${NC}"
+        exit 1
+    fi
+}
+
+function update_script() {
+    echo -e "${YELLOW}Checking for updates...${NC}"
+    # Get latest release version from GitHub API
+    UPSTREAM_VERSION=$(curl -s "https://api.github.com/repos/savitojs/Gurbani-Live/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+
+    if [ -z "$UPSTREAM_VERSION" ]; then
+        echo -e "${RED}Error: Failed to fetch latest version information.${NC}"
+        exit 1
+    fi
+
+    # Check for old script regardless and migrate to new script
+    clean_old_script "true"
+
+    if [ "$UPSTREAM_VERSION" == "$VERSION" ]; then
+        echo -e "${GREEN}You are already using the latest version ($VERSION). ✨ No update required.${NC}"
+        exit 0
+    fi
+
+    if [ ! -w "$0" ]; then
+        echo -e "${RED}Error: Cannot write to $(dirname "$0"). Try running with sudo${NC}"
+        exit 1
+    fi
+
+    echo ""
+    echo -e "${PURPLE}!!!!!! Update Available !!!!!!${NC}"
+    echo -e "Installed version: ${RED}${VERSION}${NC}"
+    echo -e "Latest version:    ${GREEN}${UPSTREAM_VERSION}${NC}"
+    echo ""
+    echo -e "${YELLOW}IMPORTANT:${NC} This will replace the installed script at: ${CYAN}$0${NC}"
+    echo -e "If you continue, your current version of the script will be overwritten."
+    echo -en "Press ${GREEN}Enter${NC} to continue or ${RED}Ctrl+C${NC} to cancel"
+
+    read -p ": "
+
+    LATEST_SCRIPT_URL="https://github.com/savitojs/Gurbani-Live/releases/latest/download/gurbani-live"
+
+    if curl -o "$0" -s -L "$LATEST_SCRIPT_URL"; then
+        echo -e "${GREEN}Script updated successfully to version $UPSTREAM_VERSION${NC}"
+        chmod +x "$0"
+        echo -e "${CYAN}You can now run the updated script.${NC}"
+    else
+        echo -e "${RED}Failed to update the script${NC}"
+        exit 1
+    fi
+    exit 0
+}
+
+function stop_playback() {
+    if [ -n "$CURRENT_PLAYING_CHANNEL" ]; then
+        echo -e "${RED}Stopping the stream in the background...${NC}"
+        echo -e "${CYAN}You were listening to: ${GREEN}$CURRENT_PLAYING_CHANNEL${NC}"
+    else
+        echo -e "${RED}Stopping the stream in the background...${NC}"
+    fi
+
+    # macOS and Linux compatible process killing
+    if [[ "$OS" == "Darwin" ]]; then
+        # On macOS, VLC might be running as VLC.app
+        pkill -f "VLC" > /dev/null 2>&1 || killall VLC > /dev/null 2>&1
+    else
+        pkill vlc || pkill VLC > /dev/null 2>&1
+    fi
+    echo -e "${GREEN}Playback stopped.${NC}"
+    echo ""
+
+    # Clear current playing channel
+    CURRENT_PLAYING_CHANNEL=""
+    CURRENT_PLAYING_URL=""
+}
+
+function check_dependencies() {
+    local missing=()
+
+    # Check for VLC
+    if [[ "$OS" == "Darwin" ]]; then
+        # On macOS, check for VLC.app or vlc command
+        if ! command -v vlc &>/dev/null && [ ! -d "/Applications/VLC.app" ]; then
+            missing+=("vlc")
+        fi
+    else
+        # On Linux, check for vlc command
+        if ! command -v vlc &>/dev/null; then
+            missing+=("vlc")
+        fi
+    fi
+
+    # Check other deps
+    for cmd in fzf jq; do
+        if ! command -v $cmd &>/dev/null; then
+            missing+=($cmd)
+        fi
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo -e "${RED}Missing dependencies: ${missing[@]}${NC}"
+        echo -e "${YELLOW}Attempting to install missing dependencies...${NC}"
+
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            if command -v brew &>/dev/null; then
+                for cmd in "${missing[@]}"; do
+                    brew install $cmd
+                done
+            else
+                echo "Homebrew is not installed. Please install it from https://brew.sh/"
+                exit 1
+            fi
+        elif [[ -f /etc/fedora-release ]]; then
+            sudo dnf install -y "${missing[@]}"
+        elif [[ -f /etc/lsb-release ]]; then
+            sudo apt-get install -y "${missing[@]}"
+        else
+            echo "Unsupported OS. Please install the following dependencies manually: ${missing[@]}"
+            exit 1
+        fi
+    fi
+}
+
+#
+# https://gitlab.com/-/snippets/1936196
+#
+function execute_and_wait() {
+  eval $1 >/tmp/execute-and-wait.log 2>&1 &
+  pid=$!
+  delay=0.05
+
+  frames=('\u280B' '\u2819' '\u2839' '\u2838' '\u283C' '\u2834' '\u2826' '\u2827' '\u2807' '\u280F')
+
+  echo "$pid" >"/tmp/.spinner.pid"
+
+  # Hide cursor (only if we have a proper terminal)
+  if [ -t 1 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+    tput civis 2>/dev/null || true
+  fi
+  index=0
+  framesCount=${#frames[@]}
+  while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+    printf "${YELLOW}${frames[$index]}${NC} ${GREEN}$2${NC}"
+
+    let index=index+1
+    if [ "$index" -ge "$framesCount" ]; then
+      index=0
+    fi
+
+    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+    sleep $delay
+  done
+
+  wait $!
+  exitCode=$?
+
+  if [ "$exitCode" -eq "0" ]; then
+    printf "${CHECK_SYMBOL} ${2}                                                                \b\n"
+  else
+    printf "${X_SYMBOL} ${2}                                                                \b\n"
+  fi
+
+  # show cursor (only if we have a proper terminal)
+  if [ -t 1 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+    tput cnorm 2>/dev/null || true
+  fi
+
+  return $exitCode
+}
+
+function show_status() {
+    execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+    result=$?
+
+    if [ $result -ne 0 ]; then
+      echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+      exit 1
+    else
+      echo ""
+      echo -e "${BLUE}Title\tChannel\tOnline/Offline\tLocation${NC}" | column -t -s $'\t'
+    fi
+
+    jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)"' /tmp/radio_data.json | while IFS=$'\t' read -r title channel isOnline location; do
+        if [ "$isOnline" = "true" ]; then
+            online_status="${GREEN}Online${NC}"
+        else
+            online_status="${RED}Offline${NC}"
+        fi
+        echo -e "$title\t$channel\t$online_status\t$location"
+    done | column -t -s $'\t'
+
+    rm /tmp/radio_data.json
+    exit 0
+}
+
+function load_favorites() {
+    if [ -f "$FAVORITES_FILE" ]; then
+        cat "$FAVORITES_FILE"
+    fi
+}
+
+function save_favorite() {
+    local channel="$1"
+    if [ ! -f "$FAVORITES_FILE" ]; then
+        touch "$FAVORITES_FILE"
+    fi
+    if ! grep -q "^$channel$" "$FAVORITES_FILE"; then
+        echo "$channel" >> "$FAVORITES_FILE"
+        echo -e "${GREEN}✅ Added to favorites: $channel${NC}"
+    else
+        echo -e "${YELLOW}Already in favorites: $channel${NC}"
+    fi
+}
+
+function remove_favorite() {
+    local channel="$1"
+    if [ -f "$FAVORITES_FILE" ]; then
+        # macOS compatible sed command
+        if [[ "$OS" == "Darwin" ]]; then
+            sed -i '' "/^$channel$/d" "$FAVORITES_FILE"
+        else
+            sed -i "/^$channel$/d" "$FAVORITES_FILE"
+        fi
+        echo -e "${GREEN}Removed from favorites: $channel${NC}"
+    fi
+}
+
+function is_favorite() {
+    local channel="$1"
+    if [ -f "$FAVORITES_FILE" ] && grep -q "^$channel$" "$FAVORITES_FILE"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function save_last_played() {
+    local channel="$1"
+    # Only save the first line (in case of accidental multiline input; play safe)
+    echo "$channel" | head -n 1 > "$LAST_PLAYED_FILE"
+}
+
+function load_last_played() {
+    if [ -f "$LAST_PLAYED_FILE" ]; then
+        head -n 1 "$LAST_PLAYED_FILE"
+    fi
+}
+
+function refresh_channel_list() {
+    echo -e "${BLUE}Refreshing channel list...${NC}"
+    execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+    result=$?
+
+    if [ $result -ne 0 ]; then
+        echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+        return 1
+    else
+        echo -e "${GREEN}Channel list refreshed successfully!${NC}"
+        echo ""
+        return 0
+    fi
+}
+
+function get_channel_count() {
+    local count=$(jq -r '[.[] | select(.isLive == true and .isOnline == true)] | length' /tmp/radio_data.json 2>/dev/null || echo "0")
+    echo "$count"
+}
+
+function main_menu() {
+    local channel_count=$(get_channel_count)
+    echo -e "${BLUE}${GREEN}$channel_count${BLUE} channels online${NC}"
+
+    if [ -n "$CURRENT_PLAYING_CHANNEL" ]; then
+        echo -e "${CYAN}Now playing: ${GREEN}$CURRENT_PLAYING_CHANNEL${NC}"
+    fi
+
+    select_and_play_channel
+}
+
+function select_and_play_channel() {
+    local temp_file="/tmp/channel_selection.txt"
+
+    # Clear the temp file
+    > "$temp_file"
+
+    # Add refresh option first
+    echo "🔄 Refresh Channel List" >> "$temp_file"
+
+    # Process channels and add to temp file with proper formatting
+    while IFS=$'\t' read -r title channel isOnline location url; do
+        if [ "$isOnline" = "true" ]; then
+            local channel_name="$title - $location"
+            if is_favorite "$channel_name"; then
+                echo "⭐ $channel_name" >> "$temp_file"
+            else
+                echo "$channel_name" >> "$temp_file"
+            fi
+        fi
+    done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' /tmp/radio_data.json)
+
+    # Show last played channel if available
+    local last_played=$(load_last_played)
+    if [ -n "$last_played" ] && [ "$last_played" != "🔄 Refresh Channel List" ]; then
+        echo -e "${CYAN}Last played: ${GREEN}$last_played${NC}"
+    fi
+
+    selected_name=$(cat "$temp_file" | fzf --no-sort --height=15 --border=rounded --prompt="Select channel: " --layout=reverse)
+
+    if [ -z "$selected_name" ]; then
+        echo "No selection made, exiting."
+        rm "$temp_file"
+        exit 0
+    fi
+
+    # Handle refresh option
+    if [ "$selected_name" = "🔄 Refresh Channel List" ]; then
+        rm "$temp_file"
+        if refresh_channel_list; then
+            main_menu
+        else
+            echo -e "${RED}Failed to refresh. Please try again.${NC}"
+            exit 1
+        fi
+        return
+    fi
+
+    # Remove star from display name to get original channel name
+    local original_channel_name="${selected_name#⭐ }"
+
+    # Find the URL for the selected channel
+    local url=""
+    while IFS=$'\t' read -r title channel isOnline location u; do
+        if [ "$isOnline" = "true" ]; then
+            local cname="$title - $location"
+            if [ "$cname" = "$original_channel_name" ]; then
+                url="$u"
+                break
+            fi
+        fi
+    done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' /tmp/radio_data.json)
+
+    rm "$temp_file"
+    rm /tmp/radio_data.json
+
+    # Save as last played (only if it's a real channel, not refresh option)
+    if [ "$original_channel_name" != "🔄 Refresh Channel List" ]; then
+        save_last_played "$original_channel_name"
+    fi
+
+    handle_playback "$original_channel_name" "$url"
+}
+
+function handle_playback() {
+    local selected_index="$1"
+    local url="$2"
+    VLC_BIN=$(which vlc)
+    PS3="Select an option: "
+
+    # Set current playing channel
+    CURRENT_PLAYING_CHANNEL="$selected_index"
+    CURRENT_PLAYING_URL="$url"
+
+    if ps aux | grep -v grep | grep -qi "VLC" > /dev/null; then
+        echo -e "${RED}Stopping previous playback...${NC}"
+        stop_playback
+    fi
+
+    echo -e "${GREEN}🎵 Playing ${selected_index}...${NC}"
+    if launch_vlc "$url"; then
+        echo -e "${GREEN}✅ Stream started${NC}"
+    else
+        echo -e "${RED}Failed to launch VLC${NC}"
+        exit 1
+    fi
+    echo ""
+
+    while true; do
+        echo -e "${CYAN}Options:${NC}"
+        echo -e "  ${GREEN}1${NC}. 🛑  Stop (${YELLOW}s${NC})"
+        echo -e "  ${GREEN}2${NC}. 💤  Background (${YELLOW}b${NC})"
+        echo -e "  ${GREEN}3${NC}. 🔄  Switch (${YELLOW}c${NC})"
+        echo -e "  ${GREEN}4${NC}. ⭐  Favorite (${YELLOW}f${NC})"
+        echo -e "  ${GREEN}5${NC}. 📻  Refresh (${YELLOW}r${NC})"
+
+        # Read single character without Enter
+        read -n 1 -s choice
+        echo ""
+
+        case "$choice" in
+            "1"|"s"|"S")
+                stop_playback && exit 0
+                ;;
+            "2"|"b"|"B")
+                echo -e "${BLUE}Running in background.${NC} \n${GREEN}You can stop the background playback running: $(basename $0) --stop"
+                exit
+                ;;
+            "3"|"c"|"C")
+                echo -e "${BLUE}Switching to another radio channel...${NC}"
+                execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+                result=$?
+                if [ $result -ne 0 ]; then
+                  echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+                  exit 1
+                else
+                    echo ""
+                    echo -e "${BLUE}Shows only Gurudwaras with their ${GREEN}Online${BLUE} status on Sikhnet${NC}"
+                fi
+                select_and_play_channel
+                ;;
+            "4"|"f"|"F")
+                if is_favorite "$selected_index"; then
+                    remove_favorite "$selected_index"
+                else
+                    save_favorite "$selected_index"
+                fi
+                ;;
+            "5"|"r"|"R")
+                if refresh_channel_list; then
+                    echo -e "${BLUE}Switching to refreshed channel list...${NC}"
+                    select_and_play_channel
+                else
+                    echo -e "${RED}Failed to refresh channels.${NC}"
+                fi
+                ;;
+            *)
+                echo -e "${YELLOW}Invalid option: $choice${NC}"
+                ;;
+        esac
+    done
+}
+
+function launch_vlc() {
+    local url="$1"
+    local background="${2:-true}"
+
+    if [[ "$OS" == "Darwin" ]]; then
+        # On macOS, prefer VLC.app if available
+        if [ -d "/Applications/VLC.app" ]; then
+            if [ "$background" = "true" ]; then
+                open -a VLC "$url" > /dev/null 2>&1 &
+            else
+                open -a VLC "$url"
+            fi
+        elif command -v vlc &>/dev/null; then
+            local VLC_BIN=$(which vlc)
+            if [ "$background" = "true" ]; then
+                $VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
+            else
+                $VLC_BIN "$url"
+            fi
+        else
+            echo -e "${RED}VLC not found. Please install VLC from the Mac App Store or with 'brew install vlc'${NC}"
+            return 1
+        fi
+    else
+        # On Linux
+        local VLC_BIN=$(which vlc)
+        if [ "$background" = "true" ]; then
+            $VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
+        else
+            $VLC_BIN "$url"
+        fi
+    fi
+}
+
+# Skip ASCII art for completion function
+if [[ "$1" != "completion" ]]; then
+    print_ascii_art
+fi
+
+check_dependencies
+
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+  case $1 in
+    -h | --help )
+      display_help
+      ;;
+    -s | --stop )
+      stop_playback && exit 0
+      ;;
+    -t | --status )
+      show_status
+      ;;
+    -i | --install )
+      install_script
+      ;;
+    -u | --update )
+      update_script
+      ;;
+    -v | --version )
+      show_version
+      ;;
+    -q | --quick )
+      quick_play
+      ;;
+    * )
+      echo -e "${RED}Invalid option: $1${NC}"
+      echo -e "Use ${GREEN}--help${NC} for a list of valid options."
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+# Handle non-option arguments
+if [[ "$1" == "completion" ]]; then
+  generate_completion "$2" "$3"
+fi
+
+execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+result=$?
+
+if [ $result -ne 0 ]; then
+  echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+  exit 1
+fi
+
+main_menu
