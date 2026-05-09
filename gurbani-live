@@ -9,102 +9,95 @@
 # Date: 2024-09-06 (Updated: 2025-07-04)
 # License: MIT License
 
-VERSION="v0.8"
+VERSION="v0.9"
 
 OS="$(uname)"
-if [[ "$OS" == "Darwin" ]]; then
-    BLACK='\033[0;30m'
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[0;33m'
-    BLUE='\033[0;34m'
-    PURPLE='\033[0;35m'
-    CYAN='\033[0;36m'
-    WHITE='\033[0;37m'
 
-    BRIGHT_BLACK='\033[0;90m'
-    BRIGHT_RED='\033[0;91m'
-    BRIGHT_GREEN='\033[0;92m'
-    BRIGHT_YELLOW='\033[0;93m'
-    BRIGHT_BLUE='\033[0;94m'
-    BRIGHT_PURPLE='\033[0;95m'
-    BRIGHT_CYAN='\033[0;96m'
-    BRIGHT_WHITE='\033[0;97m'
+BLACK='\033[0;30m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+WHITE='\033[0;37m'
 
-    BG_BLACK='\033[40m'
-    BG_RED='\033[41m'
-    BG_GREEN='\033[42m'
-    BG_YELLOW='\033[43m'
-    BG_BLUE='\033[44m'
-    BG_PURPLE='\033[45m'
-    BG_CYAN='\033[46m'
-    BG_WHITE='\033[47m'
+BRIGHT_BLACK='\033[0;90m'
+BRIGHT_RED='\033[0;91m'
+BRIGHT_GREEN='\033[0;92m'
+BRIGHT_YELLOW='\033[0;93m'
+BRIGHT_BLUE='\033[0;94m'
+BRIGHT_PURPLE='\033[0;95m'
+BRIGHT_CYAN='\033[0;96m'
+BRIGHT_WHITE='\033[0;97m'
 
-    # Reset color
-    NC='\033[0m'
-else
-    BLACK='\033[0;30m'
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[0;33m'
-    BLUE='\033[0;34m'
-    PURPLE='\033[0;35m'
-    CYAN='\033[0;36m'
-    WHITE='\033[0;37m'
+BG_BLACK='\033[40m'
+BG_RED='\033[41m'
+BG_GREEN='\033[42m'
+BG_YELLOW='\033[43m'
+BG_BLUE='\033[44m'
+BG_PURPLE='\033[45m'
+BG_CYAN='\033[46m'
+BG_WHITE='\033[47m'
 
-    BRIGHT_BLACK='\033[0;90m'
-    BRIGHT_RED='\033[0;91m'
-    BRIGHT_GREEN='\033[0;92m'
-    BRIGHT_YELLOW='\033[0;93m'
-    BRIGHT_BLUE='\033[0;94m'
-    BRIGHT_PURPLE='\033[0;95m'
-    BRIGHT_CYAN='\033[0;96m'
-    BRIGHT_WHITE='\033[0;97m'
-
-    BG_BLACK='\033[40m'
-    BG_RED='\033[41m'
-    BG_GREEN='\033[42m'
-    BG_YELLOW='\033[43m'
-    BG_BLUE='\033[44m'
-    BG_PURPLE='\033[45m'
-    BG_CYAN='\033[46m'
-    BG_WHITE='\033[47m'
-
-    # Reset color
-    NC='\033[0m'
-fi
+NC='\033[0m'
 
 SCRIPT_URL="https://github.com/savitojs/Gurbani-Live/releases/download/${VERSION}/gurbani-live"
-
 CURRENT_PLAYING_CHANNEL=""
 CURRENT_PLAYING_URL=""
 FAVORITES_FILE="$HOME/.gurbani_favorites"
 LAST_PLAYED_FILE="$HOME/.gurbani_last_played"
+VLC_PID_FILE="$HOME/.gurbani_vlc_pid"
+
+GURBANI_TMP="/tmp/gurbani-live.$$"
+RADIO_DATA_FILE="${GURBANI_TMP}.radio.json"
+SPINNER_LOG_FILE="${GURBANI_TMP}.spinner.log"
+CHANNEL_SELECT_FILE="${GURBANI_TMP}.channels.txt"
+UPDATE_CHECK_FILE="${GURBANI_TMP}.update"
+
+function cleanup() {
+    rm -f "${GURBANI_TMP}".*
+    if [ -t 1 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+        tput cnorm 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
+trap 'cleanup; exit 130' INT TERM
+
+function check_for_update_bg() {
+    (curl -sf --connect-timeout 3 --max-time 5 "https://api.github.com/repos/savitojs/Gurbani-Live/releases/latest" \
+        | grep '"tag_name"' \
+        | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' \
+        > "$UPDATE_CHECK_FILE" 2>/dev/null) &
+}
+
+function show_update_notice() {
+    if [ -f "$UPDATE_CHECK_FILE" ]; then
+        local latest
+        latest=$(cat "$UPDATE_CHECK_FILE" 2>/dev/null)
+        if [ -n "$latest" ] && [ "$latest" != "$VERSION" ]; then
+            echo -e "  ${YELLOW}Update available: ${VERSION} -> ${latest}${NC}  ${BRIGHT_BLACK}run: gurbani-live --update${NC}"
+            echo ""
+        fi
+    fi
+}
 
 CHECK_SYMBOL='\u2713'
 X_SYMBOL='\u2A2F'
 
 function show_version() {
     echo ""
-    echo -e "${GREEN}Gurbani Live script version: ${YELLOW}${VERSION}${NC}"
-    echo -e "${CYAN}Repository: ${BLUE}https://github.com/savitojs/gurbani-live${NC}"
+    echo -e "${GREEN}Gurbani Live ${YELLOW}${VERSION}${NC}"
+    echo -e "${BRIGHT_BLACK}https://github.com/savitojs/gurbani-live${NC}"
     echo ""
     exit 0
 }
 
 function print_ascii_art() {
-    echo -e "${CYAN}"
-    cat <<'EOF'
-
-   _____            _                 _   _      _
-  / ____|          | |               (_) | |    (_)
- | |  __ _   _ _ __| |__   __ _ _ __  _  | |     ___   _____
- | | |_ | | | | '__| '_ \ / _` | '_ \| | | |    | \ \ / / _ \
- | |__| | |_| | |  | |_) | (_| | | | | | | |____| |\ V /  __/
-  \_____|\__,_|_|  |_.__/ \__,_|_| |_|_| |______|_| \_/ \___|
-
-EOF
-    echo -e "${NC}"
+    echo ""
+    echo -e "  ${CYAN}✦${NC} ${GREEN}Gurbani Live${NC} ${BRIGHT_BLACK}· ${VERSION}${NC}"
+    echo -e "  ${BRIGHT_BLACK}Bringing divine music to your terminal${NC}"
+    echo ""
 }
 
 function display_help() {
@@ -147,34 +140,34 @@ function quick_play() {
 
     echo -e "${CYAN}Quick playing last channel: ${GREEN}$last_played${NC}"
 
-    execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+    execute_and_wait "curl -sf --connect-timeout 5 --max-time 15 https://play.sikhnet.com/api/radio -o ${RADIO_DATA_FILE}" "Fetching Live Radio data from Sikhnet.com"
     result=$?
 
     if [ $result -ne 0 ]; then
-        echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+        echo -e "${RED}Failed to fetch data.${NC} ${BRIGHT_BLACK}Log: ${SPINNER_LOG_FILE}${NC}"
         exit 1
     fi
 
-    local url=$(jq -r --arg title "$last_played" '.[] | select(.isLive == true and .isOnline == true) | select("\(.title) - \(.location)" == $title) | .resource' /tmp/radio_data.json)
+    local url=$(jq -r --arg title "$last_played" '.[] | select(.isLive == true and .isOnline == true) | select("\(.title) - \(.location)" == $title) | .resource' ${RADIO_DATA_FILE})
 
     if [ -z "$url" ] || [ "$url" = "null" ]; then
         echo -e "${RED}Last played channel '$last_played' is not available or offline.${NC}"
-        rm /tmp/radio_data.json
+        rm -f "${RADIO_DATA_FILE}"
         exit 1
     fi
 
-    rm /tmp/radio_data.json
+    rm -f "${RADIO_DATA_FILE}"
 
     # Stop any existing playback
-    if ps aux | grep -v grep | grep -qi "VLC" > /dev/null; then
+    if is_vlc_running; then
         stop_playback
     fi
 
     # Start playback
     echo -e "${GREEN}Playing $last_played...${NC}"
     if launch_vlc "$url"; then
-        echo -e "${GREEN}Stream playing in VLC...${NC}"
-        echo -e "${BLUE}Running in background.${NC} \n${GREEN}You can stop the background playback running: $(basename $0) --stop"
+        echo -e "${GREEN}Stream playing in VLC${NC}"
+        echo -e "${BRIGHT_BLACK}Stop with: $(basename $0) --stop${NC}"
     else
         echo -e "${RED}Failed to launch VLC${NC}"
         exit 1
@@ -338,7 +331,7 @@ function install_script() {
     if [ "$non_interactive" = false ]; then
         echo -e "${YELLOW}📥 Installing the script to $target_dir...${NC}"
     fi
-    curl -s -L "$SCRIPT_URL" -o "$target_dir/$script_name" && chmod +x "$target_dir/$script_name"
+    curl -sfL --connect-timeout 5 --max-time 30 "$SCRIPT_URL" -o "$target_dir/$script_name" && chmod +x "$target_dir/$script_name"
 
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}🙏 Gurbani Live installed successfully! ${YELLOW}($target_dir)${NC}"
@@ -358,71 +351,96 @@ function install_script() {
 }
 
 function update_script() {
-    echo -e "${YELLOW}Checking for updates...${NC}"
-    # Get latest release version from GitHub API
-    UPSTREAM_VERSION=$(curl -s "https://api.github.com/repos/savitojs/Gurbani-Live/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+    execute_and_wait "curl -sf --connect-timeout 5 --max-time 10 'https://api.github.com/repos/savitojs/Gurbani-Live/releases/latest' -o ${GURBANI_TMP}.version.json" "Checking for updates"
+    UPSTREAM_VERSION=$(grep '"tag_name"' "${GURBANI_TMP}.version.json" 2>/dev/null | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
 
     if [ -z "$UPSTREAM_VERSION" ]; then
-        echo -e "${RED}Error: Failed to fetch latest version information.${NC}"
+        echo -e "${RED}Could not reach GitHub.${NC}"
         exit 1
     fi
 
-    # Check for old script regardless and migrate to new script
     clean_old_script "true"
 
     if [ "$UPSTREAM_VERSION" == "$VERSION" ]; then
-        echo -e "${GREEN}You are already using the latest version ($VERSION). ✨ No update required.${NC}"
+        echo -e "${GREEN}Already on latest (${VERSION})${NC}"
         exit 0
     fi
 
+    echo ""
+    echo -e "  ${YELLOW}${VERSION}${NC} ${BRIGHT_BLACK}->${NC} ${GREEN}${UPSTREAM_VERSION}${NC}"
+    echo ""
+
     if [ ! -w "$0" ]; then
-        echo -e "${RED}Error: Cannot write to $(dirname "$0"). Try running with sudo${NC}"
+        echo -e "${RED}Cannot write to $(dirname "$0"). Try with sudo.${NC}"
         exit 1
     fi
 
-    echo ""
-    echo -e "${PURPLE}!!!!!! Update Available !!!!!!${NC}"
-    echo -e "Installed version: ${RED}${VERSION}${NC}"
-    echo -e "Latest version:    ${GREEN}${UPSTREAM_VERSION}${NC}"
-    echo ""
-    echo -e "${YELLOW}IMPORTANT:${NC} This will replace the installed script at: ${CYAN}$0${NC}"
-    echo -e "If you continue, your current version of the script will be overwritten."
-    echo -en "Press ${GREEN}Enter${NC} to continue or ${RED}Ctrl+C${NC} to cancel"
-
-    read -p ": "
+    read -p "Update now? [Y/n] " confirm
+    if [[ "$confirm" =~ ^[Nn]$ ]]; then
+        echo -e "${BRIGHT_BLACK}Cancelled.${NC}"
+        exit 0
+    fi
 
     LATEST_SCRIPT_URL="https://github.com/savitojs/Gurbani-Live/releases/latest/download/gurbani-live"
 
-    if curl -o "$0" -s -L "$LATEST_SCRIPT_URL"; then
-        echo -e "${GREEN}Script updated successfully to version $UPSTREAM_VERSION${NC}"
-        chmod +x "$0"
-        echo -e "${CYAN}You can now run the updated script.${NC}"
-    else
-        echo -e "${RED}Failed to update the script${NC}"
+    local tmp_script
+    tmp_script=$(mktemp "${GURBANI_TMP}.update.XXXXXX")
+
+    if ! curl -o "$tmp_script" -sfL --connect-timeout 5 --max-time 30 "$LATEST_SCRIPT_URL"; then
+        rm -f "$tmp_script"
+        echo -e "${RED}Download failed.${NC}"
         exit 1
     fi
+
+    if [ ! -s "$tmp_script" ] || ! head -1 "$tmp_script" | grep -q '^#!/bin/bash'; then
+        rm -f "$tmp_script"
+        echo -e "${RED}Invalid download. Your script is unchanged.${NC}"
+        exit 1
+    fi
+
+    chmod +x "$tmp_script"
+    mv "$tmp_script" "$0"
+    echo -e "${GREEN}Updated to ${UPSTREAM_VERSION}${NC}"
     exit 0
 }
 
+function is_vlc_running() {
+    if [ -f "$VLC_PID_FILE" ]; then
+        local saved_pid
+        saved_pid=$(cat "$VLC_PID_FILE")
+        if [ -n "$saved_pid" ] && kill -0 "$saved_pid" 2>/dev/null; then
+            return 0
+        fi
+        rm -f "$VLC_PID_FILE"
+    fi
+    return 1
+}
+
 function stop_playback() {
+    echo -e "${RED}Stopping playback...${NC}"
     if [ -n "$CURRENT_PLAYING_CHANNEL" ]; then
-        echo -e "${RED}Stopping the stream in the background...${NC}"
-        echo -e "${CYAN}You were listening to: ${GREEN}$CURRENT_PLAYING_CHANNEL${NC}"
-    else
-        echo -e "${RED}Stopping the stream in the background...${NC}"
+        echo -e "${BRIGHT_BLACK}Was playing: $CURRENT_PLAYING_CHANNEL${NC}"
     fi
 
-    # macOS and Linux compatible process killing
-    if [[ "$OS" == "Darwin" ]]; then
-        # On macOS, VLC might be running as VLC.app
-        pkill -f "VLC" > /dev/null 2>&1 || killall VLC > /dev/null 2>&1
+    if [ -f "$VLC_PID_FILE" ]; then
+        local saved_pid
+        saved_pid=$(cat "$VLC_PID_FILE")
+        if [ -n "$saved_pid" ]; then
+            kill "$saved_pid" 2>/dev/null
+            wait "$saved_pid" 2>/dev/null
+        fi
+        rm -f "$VLC_PID_FILE"
     else
-        pkill vlc || pkill VLC > /dev/null 2>&1
+        # Fallback: no PID file, kill by name (e.g., started outside this script)
+        if [[ "$OS" == "Darwin" ]]; then
+            pkill -f "VLC" > /dev/null 2>&1 || killall VLC > /dev/null 2>&1
+        else
+            pkill vlc > /dev/null 2>&1 || pkill VLC > /dev/null 2>&1
+        fi
     fi
     echo -e "${GREEN}Playback stopped.${NC}"
     echo ""
 
-    # Clear current playing channel
     CURRENT_PLAYING_CHANNEL=""
     CURRENT_PLAYING_URL=""
 }
@@ -478,13 +496,13 @@ function check_dependencies() {
 # https://gitlab.com/-/snippets/1936196
 #
 function execute_and_wait() {
-  eval $1 >/tmp/execute-and-wait.log 2>&1 &
+  bash -c "$1" >${SPINNER_LOG_FILE} 2>&1 &
   pid=$!
   delay=0.05
 
   frames=('\u280B' '\u2819' '\u2839' '\u2838' '\u283C' '\u2834' '\u2826' '\u2827' '\u2807' '\u280F')
 
-  echo "$pid" >"/tmp/.spinner.pid"
+  echo "$pid" >"${GURBANI_TMP}.spinner.pid"
 
   # Hide cursor (only if we have a proper terminal)
   if [ -t 1 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
@@ -492,25 +510,24 @@ function execute_and_wait() {
   fi
   index=0
   framesCount=${#frames[@]}
-  while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
-    printf "${YELLOW}${frames[$index]}${NC} ${GREEN}$2${NC}"
+  while kill -0 $pid 2>/dev/null; do
+    printf "\r${YELLOW}${frames[$index]}${NC} ${GREEN}$2${NC}\033[K"
 
     let index=index+1
     if [ "$index" -ge "$framesCount" ]; then
       index=0
     fi
 
-    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
     sleep $delay
   done
 
-  wait $!
+  wait $pid
   exitCode=$?
 
   if [ "$exitCode" -eq "0" ]; then
-    printf "${CHECK_SYMBOL} ${2}                                                                \b\n"
+    printf "\r${CHECK_SYMBOL} ${2}\033[K\n"
   else
-    printf "${X_SYMBOL} ${2}                                                                \b\n"
+    printf "\r${X_SYMBOL} ${2}\033[K\n"
   fi
 
   # show cursor (only if we have a proper terminal)
@@ -522,27 +539,41 @@ function execute_and_wait() {
 }
 
 function show_status() {
-    execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+    execute_and_wait "curl -sf --connect-timeout 5 --max-time 15 https://play.sikhnet.com/api/radio -o ${RADIO_DATA_FILE}" "Fetching Live Radio data from Sikhnet.com"
     result=$?
 
     if [ $result -ne 0 ]; then
-      echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+      echo -e "${RED}Failed to fetch data.${NC} ${BRIGHT_BLACK}Log: ${SPINNER_LOG_FILE}${NC}"
       exit 1
-    else
-      echo ""
-      echo -e "${BLUE}Title\tChannel\tOnline/Offline\tLocation${NC}" | column -t -s $'\t'
     fi
 
-    jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)"' /tmp/radio_data.json | while IFS=$'\t' read -r title channel isOnline location; do
+    local fmt="  %-30s %-10s %-10s %s\n"
+    echo ""
+    printf "${BLUE}${fmt}${NC}" "Title" "Channel" "Status" "Location"
+    local cols
+    cols=$(tput cols 2>/dev/null || echo 70)
+    local rule
+    rule=$(printf '─%.0s' $(seq 1 $((cols - 4))))
+    echo -e "  ${BRIGHT_BLACK}${rule}${NC}"
+
+    jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)"' ${RADIO_DATA_FILE} | while IFS=$'\t' read -r title channel isOnline location; do
         if [ "$isOnline" = "true" ]; then
             online_status="${GREEN}Online${NC}"
         else
             online_status="${RED}Offline${NC}"
         fi
-        echo -e "$title\t$channel\t$online_status\t$location"
-    done | column -t -s $'\t'
+        printf "  %-30s %-10s " "$title" "$channel"
+        printf "${online_status}"
+        # Pad to 10 visible chars (Online=6, Offline=7)
+        if [ "$isOnline" = "true" ]; then
+            printf "     "
+        else
+            printf "    "
+        fi
+        printf "%s\n" "$location"
+    done
 
-    rm /tmp/radio_data.json
+    rm -f "${RADIO_DATA_FILE}"
     exit 0
 }
 
@@ -557,7 +588,7 @@ function save_favorite() {
     if [ ! -f "$FAVORITES_FILE" ]; then
         touch "$FAVORITES_FILE"
     fi
-    if ! grep -q "^$channel$" "$FAVORITES_FILE"; then
+    if ! grep -qxF "$channel" "$FAVORITES_FILE"; then
         echo "$channel" >> "$FAVORITES_FILE"
         echo -e "${GREEN}✅ Added to favorites: $channel${NC}"
     else
@@ -568,19 +599,15 @@ function save_favorite() {
 function remove_favorite() {
     local channel="$1"
     if [ -f "$FAVORITES_FILE" ]; then
-        # macOS compatible sed command
-        if [[ "$OS" == "Darwin" ]]; then
-            sed -i '' "/^$channel$/d" "$FAVORITES_FILE"
-        else
-            sed -i "/^$channel$/d" "$FAVORITES_FILE"
-        fi
+        grep -vxF "$channel" "$FAVORITES_FILE" > "${FAVORITES_FILE}.tmp" || true
+        mv "${FAVORITES_FILE}.tmp" "$FAVORITES_FILE"
         echo -e "${GREEN}Removed from favorites: $channel${NC}"
     fi
 }
 
 function is_favorite() {
     local channel="$1"
-    if [ -f "$FAVORITES_FILE" ] && grep -q "^$channel$" "$FAVORITES_FILE"; then
+    if [ -f "$FAVORITES_FILE" ] && grep -qxF "$channel" "$FAVORITES_FILE"; then
         return 0
     else
         return 1
@@ -601,11 +628,11 @@ function load_last_played() {
 
 function refresh_channel_list() {
     echo -e "${BLUE}Refreshing channel list...${NC}"
-    execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+    execute_and_wait "curl -sf --connect-timeout 5 --max-time 15 https://play.sikhnet.com/api/radio -o ${RADIO_DATA_FILE}" "Fetching Live Radio data from Sikhnet.com"
     result=$?
 
     if [ $result -ne 0 ]; then
-        echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+        echo -e "${RED}Failed to fetch data.${NC} ${BRIGHT_BLACK}Log: ${SPINNER_LOG_FILE}${NC}"
         return 1
     else
         echo -e "${GREEN}Channel list refreshed successfully!${NC}"
@@ -615,23 +642,16 @@ function refresh_channel_list() {
 }
 
 function get_channel_count() {
-    local count=$(jq -r '[.[] | select(.isLive == true and .isOnline == true)] | length' /tmp/radio_data.json 2>/dev/null || echo "0")
+    local count=$(jq -r '[.[] | select(.isLive == true and .isOnline == true)] | length' ${RADIO_DATA_FILE} 2>/dev/null || echo "0")
     echo "$count"
 }
 
 function main_menu() {
-    local channel_count=$(get_channel_count)
-    echo -e "${BLUE}${GREEN}$channel_count${BLUE} channels online${NC}"
-
-    if [ -n "$CURRENT_PLAYING_CHANNEL" ]; then
-        echo -e "${CYAN}Now playing: ${GREEN}$CURRENT_PLAYING_CHANNEL${NC}"
-    fi
-
     select_and_play_channel
 }
 
 function select_and_play_channel() {
-    local temp_file="/tmp/channel_selection.txt"
+    local temp_file="${CHANNEL_SELECT_FILE}"
 
     # Clear the temp file
     > "$temp_file"
@@ -649,15 +669,33 @@ function select_and_play_channel() {
                 echo "$channel_name" >> "$temp_file"
             fi
         fi
-    done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' /tmp/radio_data.json)
+    done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' ${RADIO_DATA_FILE})
 
-    # Show last played channel if available
-    local last_played=$(load_last_played)
+    local channel_count
+    channel_count=$(get_channel_count)
+    local last_played
+    last_played=$(load_last_played)
+
+    local fzf_header="${channel_count} channels online"
+    if [ -n "$CURRENT_PLAYING_CHANNEL" ]; then
+        fzf_header="${fzf_header}  ♫ ${CURRENT_PLAYING_CHANNEL}"
+    fi
     if [ -n "$last_played" ] && [ "$last_played" != "🔄 Refresh Channel List" ]; then
-        echo -e "${CYAN}Last played: ${GREEN}$last_played${NC}"
+        fzf_header="${fzf_header}
+Last played: ${last_played}"
     fi
 
-    selected_name=$(cat "$temp_file" | fzf --no-sort --height=15 --border=rounded --prompt="Select channel: " --layout=reverse)
+    selected_name=$(cat "$temp_file" | fzf \
+        --no-sort \
+        --height=~20 \
+        --border=rounded \
+        --layout=reverse \
+        --pointer='▶' \
+        --prompt='♫ Select channel: ' \
+        --header="$fzf_header" \
+        --color='pointer:green,prompt:cyan,header:blue,border:bright-black,hl:yellow,hl+:yellow' \
+        --info=inline \
+    )
 
     if [ -z "$selected_name" ]; then
         echo "No selection made, exiting."
@@ -690,10 +728,10 @@ function select_and_play_channel() {
                 break
             fi
         fi
-    done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' /tmp/radio_data.json)
+    done < <(jq -r '.[] | select(.isLive == true) | "\(.title)\t\(.channel)\t\(.isOnline)\t\(.location)\t\(.resource)"' ${RADIO_DATA_FILE})
 
     rm "$temp_file"
-    rm /tmp/radio_data.json
+    rm -f "${RADIO_DATA_FILE}"
 
     # Save as last played (only if it's a real channel, not refresh option)
     if [ "$original_channel_name" != "🔄 Refresh Channel List" ]; then
@@ -706,77 +744,75 @@ function select_and_play_channel() {
 function handle_playback() {
     local selected_index="$1"
     local url="$2"
-    VLC_BIN=$(which vlc)
-    PS3="Select an option: "
 
     # Set current playing channel
     CURRENT_PLAYING_CHANNEL="$selected_index"
     CURRENT_PLAYING_URL="$url"
 
-    if ps aux | grep -v grep | grep -qi "VLC" > /dev/null; then
+    if is_vlc_running; then
         echo -e "${RED}Stopping previous playback...${NC}"
         stop_playback
     fi
 
-    echo -e "${GREEN}🎵 Playing ${selected_index}...${NC}"
     if launch_vlc "$url"; then
-        echo -e "${GREEN}✅ Stream started${NC}"
+        local fav_label
+        if is_favorite "$selected_index"; then
+            fav_label="un[f]av"
+        else
+            fav_label="[f]av"
+        fi
+        local cols
+        cols=$(tput cols 2>/dev/null || echo 50)
+        local rule
+        rule=$(printf '─%.0s' $(seq 1 "$cols"))
+        echo ""
+        echo -e "${BRIGHT_BLACK}${rule}${NC}"
+        echo -e "  ${CYAN}♫ Now playing: ${GREEN}${selected_index}${NC}"
+        echo -e "  🛑 ${RED}[s]${NC}top  💤 ${BLUE}[b]${NC}ackground  🔄 ${CYAN}[c]${NC}hange  ⭐ ${YELLOW}${fav_label}${NC}  📻 ${GREEN}[r]${NC}efresh"
+        echo -e "${BRIGHT_BLACK}${rule}${NC}"
     else
         echo -e "${RED}Failed to launch VLC${NC}"
         exit 1
     fi
-    echo ""
 
     while true; do
-        echo -e "${CYAN}Options:${NC}"
-        echo -e "  ${GREEN}1${NC}. 🛑  Stop (${YELLOW}s${NC})"
-        echo -e "  ${GREEN}2${NC}. 💤  Background (${YELLOW}b${NC})"
-        echo -e "  ${GREEN}3${NC}. 🔄  Switch (${YELLOW}c${NC})"
-        echo -e "  ${GREEN}4${NC}. ⭐  Favorite (${YELLOW}f${NC})"
-        echo -e "  ${GREEN}5${NC}. 📻  Refresh (${YELLOW}r${NC})"
-
-        # Read single character without Enter
         read -n 1 -s choice
-        echo ""
 
         case "$choice" in
-            "1"|"s"|"S")
+            "s"|"S")
                 stop_playback && exit 0
                 ;;
-            "2"|"b"|"B")
-                echo -e "${BLUE}Running in background.${NC} \n${GREEN}You can stop the background playback running: $(basename $0) --stop"
+            "b"|"B")
+                echo -e "\n${GREEN}Running in background.${NC}"
+                echo -e "${BRIGHT_BLACK}Stop with: $(basename $0) --stop${NC}"
                 exit
                 ;;
-            "3"|"c"|"C")
-                echo -e "${BLUE}Switching to another radio channel...${NC}"
-                execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+            "c"|"C")
+                echo ""
+                execute_and_wait "curl -sf --connect-timeout 5 --max-time 15 https://play.sikhnet.com/api/radio -o ${RADIO_DATA_FILE}" "Fetching Live Radio data from Sikhnet.com"
                 result=$?
                 if [ $result -ne 0 ]; then
-                  echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
-                  exit 1
-                else
-                    echo ""
-                    echo -e "${BLUE}Shows only Gurudwaras with their ${GREEN}Online${BLUE} status on Sikhnet${NC}"
+                    echo -e "${RED}Failed to fetch data.${NC} ${BRIGHT_BLACK}Log: ${SPINNER_LOG_FILE}${NC}"
+                    exit 1
                 fi
                 select_and_play_channel
                 ;;
-            "4"|"f"|"F")
+            "f"|"F")
                 if is_favorite "$selected_index"; then
                     remove_favorite "$selected_index"
                 else
                     save_favorite "$selected_index"
                 fi
                 ;;
-            "5"|"r"|"R")
+            "r"|"R")
+                echo ""
                 if refresh_channel_list; then
-                    echo -e "${BLUE}Switching to refreshed channel list...${NC}"
                     select_and_play_channel
                 else
                     echo -e "${RED}Failed to refresh channels.${NC}"
                 fi
                 ;;
             *)
-                echo -e "${YELLOW}Invalid option: $choice${NC}"
                 ;;
         esac
     done
@@ -787,10 +823,10 @@ function launch_vlc() {
     local background="${2:-true}"
 
     if [[ "$OS" == "Darwin" ]]; then
-        # On macOS, prefer VLC.app if available
         if [ -d "/Applications/VLC.app" ]; then
             if [ "$background" = "true" ]; then
                 open -a VLC "$url" > /dev/null 2>&1 &
+                echo $! > "$VLC_PID_FILE"
             else
                 open -a VLC "$url"
             fi
@@ -798,6 +834,7 @@ function launch_vlc() {
             local VLC_BIN=$(which vlc)
             if [ "$background" = "true" ]; then
                 $VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
+                echo $! > "$VLC_PID_FILE"
             else
                 $VLC_BIN "$url"
             fi
@@ -806,33 +843,33 @@ function launch_vlc() {
             return 1
         fi
     else
-        # On Linux
         local VLC_BIN=$(which vlc)
         if [ "$background" = "true" ]; then
             $VLC_BIN -I dummy "$url" > /dev/null 2>&1 &
+            echo $! > "$VLC_PID_FILE"
         else
             $VLC_BIN "$url"
         fi
     fi
 }
 
-# Skip ASCII art for completion function
+# Skip ASCII art and update check for completion function
 if [[ "$1" != "completion" ]]; then
     print_ascii_art
+    check_for_update_bg
 fi
 
-check_dependencies
-
+# Handle flags that don't need dependencies first
 while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
   case $1 in
     -h | --help )
       display_help
       ;;
+    -v | --version )
+      show_version
+      ;;
     -s | --stop )
       stop_playback && exit 0
-      ;;
-    -t | --status )
-      show_status
       ;;
     -i | --install )
       install_script
@@ -840,10 +877,12 @@ while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
     -u | --update )
       update_script
       ;;
-    -v | --version )
-      show_version
+    -t | --status )
+      check_dependencies
+      show_status
       ;;
     -q | --quick )
+      check_dependencies
       quick_play
       ;;
     * )
@@ -860,12 +899,17 @@ if [[ "$1" == "completion" ]]; then
   generate_completion "$2" "$3"
 fi
 
-execute_and_wait "curl -s https://play.sikhnet.com/api/radio -o /tmp/radio_data.json" "Fetching Live Radio data from Sikhnet.com"
+check_dependencies
+
+execute_and_wait "curl -sf --connect-timeout 5 --max-time 15 https://play.sikhnet.com/api/radio -o ${RADIO_DATA_FILE}" "Fetching Live Radio data from Sikhnet.com"
 result=$?
 
 if [ $result -ne 0 ]; then
-  echo "Failed to fetch data. Please check the log at /tmp/execute-and-wait.log."
+  echo -e "${RED}Failed to fetch data.${NC} ${BRIGHT_BLACK}Log: ${SPINNER_LOG_FILE}${NC}"
   exit 1
 fi
+
+wait 2>/dev/null
+show_update_notice
 
 main_menu

@@ -1,6 +1,5 @@
-# Auto-completion function for Bash and Zsh for gurbani-live
-# Now, added in script itself
-# Use gurbani-live completion to generate the completion script for zsh and bash
+# Shell completion for gurbani-live (bash and zsh)
+# Standalone file. The script also has built-in completion via: gurbani-live completion [bash|zsh]
 _gurbani_live_completions() {
     local cur prev
     COMPREPLY=()
@@ -8,7 +7,7 @@ _gurbani_live_completions() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts=('-h' '--help' '-s' '--stop' '-t' '--status' '-i' '--install' '-u' '--update' '-v' '--version' '-q' '--quick' '-c' '--completion')
+    opts=('-h' '--help' '-s' '--stop' '-t' '--status' '-i' '--install' '-u' '--update' '-v' '--version' '-q' '--quick')
 
     # For Bash
     if [[ -n "$BASH_VERSION" ]]; then

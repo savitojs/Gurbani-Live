@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="200" viewBox="0 0 800 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117"/>
+      <stop offset="100%" style="stop-color:#161b22"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00BCD4"/>
+      <stop offset="100%" style="stop-color:#4CAF50"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" rx="12" fill="url(#bg)"/>
+
+  <!-- Subtle top border gradient -->
+  <rect width="800" height="2" rx="1" fill="url(#accent)" opacity="0.6"/>
+
+  <!-- Musical note decoration (left side) -->
+  <g transform="translate(60, 55)" fill="url(#accent)" opacity="0.15">
+    <text font-family="serif" font-size="120" y="90">&#9835;</text>
+  </g>
+
+  <!-- Musical note decoration (right side) -->
+  <g transform="translate(680, 40)" fill="url(#accent)" opacity="0.1">
+    <text font-family="serif" font-size="90" y="70">&#9834;</text>
+  </g>
+
+  <!-- Sparkle decoration -->
+  <text x="720" y="50" font-size="16" fill="#00BCD4" opacity="0.3">&#10022;</text>
+  <text x="140" y="160" font-size="12" fill="#4CAF50" opacity="0.2">&#10022;</text>
+
+  <!-- Main title -->
+  <text x="400" y="90" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="52" font-weight="700" letter-spacing="-1">
+    <tspan fill="#00BCD4">Gurbani</tspan>
+    <tspan fill="#4CAF50" dx="8">Live</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="400" y="125" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" fill="#8b949e" letter-spacing="2">
+    Bringing divine music to your terminal
+  </text>
+
+  <!-- Subtle divider -->
+  <line x1="300" y1="145" x2="500" y2="145" stroke="url(#accent)" stroke-width="1" opacity="0.3"/>
+
+  <!-- Terminal hint -->
+  <text x="400" y="170" text-anchor="middle" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="13" fill="#58a6ff" opacity="0.6">
+    $ gurbani-live
+  </text>
+</svg>
