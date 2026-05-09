@@ -3,15 +3,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/savitojs/gurbani-live/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/savitojs/gurbani-live/release.yml?label=CI&style=flat-square" alt="CI"></a>
-  <a href="https://github.com/savitojs/gurbani-live/releases/latest"><img src="https://img.shields.io/github/v/release/savitojs/gurbani-live?style=flat-square&color=4CAF50" alt="Release"></a>
-  <a href="https://github.com/savitojs/gurbani-live/blob/main/LICENSE"><img src="https://img.shields.io/github/license/savitojs/gurbani-live?style=flat-square" alt="License"></a>  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue?style=flat-square" alt="Platform">
-  <a href="https://github.com/savitojs/gurbani-live/stargazers"><img src="https://img.shields.io/github/stars/savitojs/gurbani-live?style=flat-square&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/savitojs/Gurbani-Live/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/savitojs/Gurbani-Live/release.yml?label=CI&style=flat-square" alt="CI"></a>
+  <a href="https://github.com/savitojs/Gurbani-Live/releases/latest"><img src="https://img.shields.io/github/v/release/savitojs/Gurbani-Live?style=flat-square&color=4CAF50" alt="Release"></a>
+  <a href="https://github.com/savitojs/Gurbani-Live/blob/main/LICENSE"><img src="https://img.shields.io/github/license/savitojs/Gurbani-Live?style=flat-square" alt="License"></a>  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue?style=flat-square" alt="Platform">
+  <a href="https://github.com/savitojs/Gurbani-Live/stargazers"><img src="https://img.shields.io/github/stars/savitojs/Gurbani-Live?style=flat-square&color=yellow" alt="Stars"></a>
 </p>
 
 <p align="center">
   Stream live Gurbani radio channels from <a href="https://sikhnet.com">Sikhnet.com</a> in your terminal via VLC.<br>
-  <sub>If this is useful to you, a <a href="https://github.com/savitojs/gurbani-live">star</a> helps others find it.</sub>
+  <sub>If this is useful to you, a <a href="https://github.com/savitojs/Gurbani-Live">star</a> helps others find it.</sub>
 </p>
 
 ![demo](./assets/demo.gif)
@@ -33,7 +33,7 @@ curl -sL https://github.com/savitojs/Gurbani-Live/releases/latest/download/gurba
 
 **Or download first:**
 ```bash
-curl -O https://raw.githubusercontent.com/savitojs/gurbani-live/main/gurbani-live
+curl -O https://raw.githubusercontent.com/savitojs/Gurbani-Live/main/gurbani-live
 chmod +x gurbani-live
 ./gurbani-live --install
 ```

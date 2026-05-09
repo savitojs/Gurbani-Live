@@ -41,7 +41,7 @@ jobs:
 
           # Update SCRIPT_URL to point to the release script
           SCRIPT_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/${{ env.SCRIPT_NAME }}"
-          sed -i "s|SCRIPT_URL=\".*\"|SCRIPT_URL=\"${SCRIPT_URL}\"|" gurbani-live
+          sed -i "s|^SCRIPT_URL=\".*\"|SCRIPT_URL=\"${SCRIPT_URL}\"|" gurbani-live
 
       - name: Prepare script for release
         run: |
