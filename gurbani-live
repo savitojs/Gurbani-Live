@@ -6,10 +6,10 @@
 #   Features: VLC playback, favorites system, quick play, shell completion, auto-install/update
 #   🙏 Devoted to the Almighty (ਵਾਹਿਗੁਰੂ), in humble service and endless gratitude
 # Author: Savitoj Singh
-# Date: 2024-09-06 (Updated: 2025-07-04)
+# Date: 2024-09-06 (Updated: 2025-05-14)
 # License: MIT License
 
-VERSION="v0.9"
+VERSION="v0.10"
 
 OS="$(uname)"
 
@@ -54,6 +54,16 @@ RADIO_DATA_FILE="${GURBANI_TMP}.radio.json"
 SPINNER_LOG_FILE="${GURBANI_TMP}.spinner.log"
 CHANNEL_SELECT_FILE="${GURBANI_TMP}.channels.txt"
 UPDATE_CHECK_FILE="${GURBANI_TMP}.update"
+
+VIZ_BARS=('▁' '▂' '▃' '▄' '▅' '▆' '▇' '█')
+VIZ_MUSIC=('♪' '♫' '♬' '♭' '♯' '𝄞' '𝄢' '𝄡')
+VIZ_WAVE=('◜' '◠' '◝' '◞' '◡' '◟')
+VIZ_PULSE=('●' '◍' '○' '◍')
+VIZ_BRAILLE=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+
+VIZ_STYLES=(bars music wave pulse braille)
+VIZ_STYLE="${VIZ_STYLES[$((RANDOM % ${#VIZ_STYLES[@]}))]}"
+VIZ_INDEX=0
 
 function cleanup() {
     rm -f "${GURBANI_TMP}".*
@@ -741,6 +751,33 @@ Last played: ${last_played}"
     handle_playback "$original_channel_name" "$url"
 }
 
+function draw_visualizer() {
+    VIZ_OUTPUT=""
+    case "$VIZ_STYLE" in
+        bars)
+            for _ in {1..8}; do
+                VIZ_OUTPUT+="${VIZ_BARS[$((RANDOM % ${#VIZ_BARS[@]}))]}"
+            done
+            ;;
+        music)
+            VIZ_OUTPUT="${VIZ_MUSIC[$VIZ_INDEX]}"
+            VIZ_INDEX=$(( (VIZ_INDEX + 1) % ${#VIZ_MUSIC[@]} ))
+            ;;
+        wave)
+            VIZ_OUTPUT="${VIZ_WAVE[$VIZ_INDEX]}"
+            VIZ_INDEX=$(( (VIZ_INDEX + 1) % ${#VIZ_WAVE[@]} ))
+            ;;
+        pulse)
+            VIZ_OUTPUT="${VIZ_PULSE[$VIZ_INDEX]}"
+            VIZ_INDEX=$(( (VIZ_INDEX + 1) % ${#VIZ_PULSE[@]} ))
+            ;;
+        braille)
+            VIZ_OUTPUT="${VIZ_BRAILLE[$VIZ_INDEX]}"
+            VIZ_INDEX=$(( (VIZ_INDEX + 1) % ${#VIZ_BRAILLE[@]} ))
+            ;;
+    esac
+}
+
 function handle_playback() {
     local selected_index="$1"
     local url="$2"
@@ -765,9 +802,11 @@ function handle_playback() {
         cols=$(tput cols 2>/dev/null || echo 50)
         local rule
         rule=$(printf '─%.0s' $(seq 1 "$cols"))
+        local viz_max_name=$((cols - 20))
+        local viz_display_name="${selected_index:0:$viz_max_name}"
         echo ""
         echo -e "${BRIGHT_BLACK}${rule}${NC}"
-        echo -e "  ${CYAN}♫ Now playing: ${GREEN}${selected_index}${NC}"
+        echo -e "  ${CYAN}Now playing: ${GREEN}${viz_display_name}${NC}"
         echo -e "  🛑 ${RED}[s]${NC}top  💤 ${BLUE}[b]${NC}ackground  🔄 ${CYAN}[c]${NC}hange  ⭐ ${YELLOW}${fav_label}${NC}  📻 ${GREEN}[r]${NC}efresh"
         echo -e "${BRIGHT_BLACK}${rule}${NC}"
     else
@@ -775,15 +814,32 @@ function handle_playback() {
         exit 1
     fi
 
+    local viz_timeout=0.15
+    if (( BASH_VERSINFO[0] < 4 )); then
+        viz_timeout=1
+    fi
+
     while true; do
-        read -n 1 -s choice
+        if ! is_vlc_running; then
+            printf "\033[3A\r\033[K"
+            echo -e "  ${BRIGHT_BLACK}Playback ended.${NC}"
+            printf "\033[2B"
+            exit 0
+        fi
+
+        draw_visualizer
+        printf "\033[3A\r  ${BLUE}${VIZ_OUTPUT}${NC} ${CYAN}Now playing: ${GREEN}${viz_display_name}${NC}\033[K\033[3B\r"
+
+        read -t "$viz_timeout" -n 1 -s choice || choice=""
 
         case "$choice" in
             "s"|"S")
+                echo ""
                 stop_playback && exit 0
                 ;;
             "b"|"B")
-                echo -e "\n${GREEN}Running in background.${NC}"
+                echo ""
+                echo -e "${GREEN}Running in background.${NC}"
                 echo -e "${BRIGHT_BLACK}Stop with: $(basename $0) --stop${NC}"
                 exit
                 ;;
@@ -799,10 +855,13 @@ function handle_playback() {
                 ;;
             "f"|"F")
                 if is_favorite "$selected_index"; then
-                    remove_favorite "$selected_index"
+                    remove_favorite "$selected_index" > /dev/null
+                    printf "\033[3A\r  ${YELLOW}Removed from favorites${NC}\033[K\033[3B\r"
                 else
-                    save_favorite "$selected_index"
+                    save_favorite "$selected_index" > /dev/null
+                    printf "\033[3A\r  ${GREEN}Added to favorites${NC}\033[K\033[3B\r"
                 fi
+                sleep 1
                 ;;
             "r"|"R")
                 echo ""
